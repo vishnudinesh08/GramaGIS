@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GramaGIS – Admin Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/logiin.css">
+</head>
+<body>
+
+<div class="login-wrapper">
+
+    <div class="login-header">
+        <span class="logo">GramaGIS</span>
+        <p>Vazhathope Panchayat Administration</p>
+    </div>
+
+    <div class="login-card">
+        <h2 class="card-title">Administrator Sign In</h2>
+        <p class="card-subtitle">Access the data management and editing portal.</p>
+
+        <div class="role-hint">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Restricted access — authorized Panchayat officials only.
+        </div>
+
+        <div class="alert" id="login-alert">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="alert-text">Invalid username or password.</span>
+        </div>
+
+        <div class="form-group">
+            <label for="username">Username</label>
+            <div class="input-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input type="text" id="username" placeholder="Enter your username" autocomplete="username">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password"
+                    onkeydown="if(event.key==='Enter') handleLogin()">
+                <button class="toggle-pw" type="button" onclick="togglePassword()" title="Show/hide password">
+                    <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <button class="btn-login" id="login-btn" onclick="handleLogin()">
+            <span id="btn-text">Sign In</span>
+            <div class="spinner" id="spinner"></div>
+        </button>
+
+        <div class="form-footer">
+            <a href="index.html">← Back to Home</a>
+            &nbsp;·&nbsp;
+            <a href="feedback.html">Submit Feedback</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // In production: replace this with a real JWT POST to /api/auth/login
+    // The token is stored in sessionStorage and checked on protected pages
+    const VALID_CREDENTIALS = [
+        { username: "admin", password: "gramagis2024", role: "superadmin" },
+        { username: "panchayat", password: "vazhathope", role: "editor" }
+    ];
+
+    function handleLogin() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const alert    = document.getElementById('login-alert');
+        const alertTxt = document.getElementById('alert-text');
+        const btn      = document.getElementById('login-btn');
+        const spinner  = document.getElementById('spinner');
+        const btnText  = document.getElementById('btn-text');
+
+        // Clear previous alert
+        alert.classList.remove('show');
+
+        if (!username || !password) {
+            alertTxt.textContent = 'Please fill in both fields.';
+            alert.classList.add('show');
+            return;
+        }
+
+        // Show loading state
+        btn.disabled = true;
+        btnText.textContent = 'Signing in…';
+        spinner.style.display = 'block';
+
+        // Simulate network delay (replace with real fetch call)
+        setTimeout(() => {
+            const match = VALID_CREDENTIALS.find(
+                c => c.username === username && c.password === password
+            );
+
+            if (match) {
+                // Store auth token (use real JWT from server in production)
+                sessionStorage.setItem('gramagis_auth', JSON.stringify({
+                    username: match.username,
+                    role: match.role,
+                    loggedIn: true,
+                    timestamp: Date.now()
+                }));
+                window.location.href = 'edit.html';
+            } else {
+                btn.disabled = false;
+                btnText.textContent = 'Sign In';
+                spinner.style.display = 'none';
+                alertTxt.textContent = 'Invalid username or password.';
+                alert.classList.add('show');
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+            }
+        }, 900);
+    }
+
+    function togglePassword() {
+        const input = document.getElementById('password');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+</script>
+</body>
+</html>

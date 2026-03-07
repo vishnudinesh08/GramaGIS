@@ -1,0 +1,220 @@
+/* ── index.css  ─ GramaGIS Landing Page ─────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --green:   #2ecc71;
+    --blue:    #1a73e8;
+    --dark:    #0d1117;
+    --card:    rgba(255,255,255,0.06);
+    --border:  rgba(255,255,255,0.12);
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--dark);
+    color: #fff;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ── Top Navigation ─────────────────────────────────────────────────── */
+.top-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 40px;
+    z-index: 100;
+    background: linear-gradient(to bottom, rgba(13,17,23,0.9), transparent);
+}
+
+.nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--green);
+    letter-spacing: 1px;
+}
+
+.admin-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: #fff;
+    text-decoration: none;
+    padding: 9px 20px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    backdrop-filter: blur(8px);
+    transition: all 0.25s ease;
+}
+
+.admin-btn:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: var(--green);
+    color: var(--green);
+    transform: translateY(-1px);
+}
+
+/* ── Background Grid ────────────────────────────────────────────────── */
+.landing-container {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        linear-gradient(135deg, rgba(26,115,232,0.15) 0%, transparent 50%),
+        linear-gradient(225deg, rgba(46,204,113,0.12) 0%, transparent 50%),
+        url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=2000') center/cover no-repeat;
+    overflow: hidden;
+}
+
+.landing-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(13, 17, 23, 0.75);
+}
+
+.bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+}
+
+/* ── Main Content ───────────────────────────────────────────────────── */
+.content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    max-width: 700px;
+    padding: 0 24px;
+    animation: fadeUp 0.9s ease both;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.badge {
+    display: inline-block;
+    background: var(--card);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(6px);
+    color: rgba(255,255,255,0.7);
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 50px;
+    margin-bottom: 24px;
+}
+
+h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3.5rem, 8vw, 5.5rem);
+    line-height: 1;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #fff 40%, var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+}
+
+.tagline {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 36px;
+}
+
+/* ── CTA Buttons ────────────────────────────────────────────────────── */
+.cta-group {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 14px 32px;
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s ease;
+}
+
+.btn-primary {
+    background: var(--green);
+    color: #fff;
+    box-shadow: 0 0 30px rgba(46,204,113,0.35);
+}
+
+.btn-primary:hover {
+    background: #27ae60;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(46,204,113,0.45);
+}
+
+.btn-secondary {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: rgba(255,255,255,0.85);
+    backdrop-filter: blur(8px);
+}
+
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.3);
+    transform: translateY(-3px);
+}
+
+/* ── Stats Row ──────────────────────────────────────────────────────── */
+.stats-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+}
+
+.stat { text-align: center; }
+
+.stat-num {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--green);
+    line-height: 1;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border);
+}

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GramaGIS – Submit Feedback</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-logo">GramaGIS</div>
+    <a href="index.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Home
+    </a>
+</div>
+
+<div class="page-wrap">
+
+    <div class="page-header">
+        <div class="tag">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Citizen Feedback
+        </div>
+        <h1>Report an Issue</h1>
+        <p>Help keep Vazhathope Panchayat's data accurate. Report missing infrastructure, incorrect information, or maintenance issues and an administrator will review your submission.</p>
+    </div>
+
+    <!-- Form card -->
+    <div class="card" id="feedback-form-card">
+        <div class="card-section-title">Your Information (Optional)</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="reporter-name">Full Name</label>
+                <div class="input-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <input type="text" id="reporter-name" placeholder="e.g. Rajesh Kumar" class="">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="reporter-phone">Phone / Email</label>
+                <div class="input-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.78-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.09a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <input type="text" id="reporter-phone" placeholder="Optional contact">
+                </div>
+            </div>
+        </div>
+
+        <div class="card-section-title" style="margin-top:8px">Issue Details <span style="color:#e74c3c">*</span></div>
+
+        <!-- Issue category chips -->
+        <div class="form-group">
+            <label>Category <span class="req">*</span></label>
+            <div class="chip-group" id="category-group">
+                <div class="chip" data-val="road" onclick="selectChip(this, 'category-group')">🛣️ Road Damage</div>
+                <div class="chip" data-val="water" onclick="selectChip(this, 'category-group')">💧 Water Supply</div>
+                <div class="chip" data-val="building" onclick="selectChip(this, 'category-group')">🏛️ Building</div>
+                <div class="chip" data-val="map_error" onclick="selectChip(this, 'category-group')">🗺️ Map Error</div>
+                <div class="chip" data-val="missing" onclick="selectChip(this, 'category-group')">❓ Missing Asset</div>
+                <div class="chip" data-val="other" onclick="selectChip(this, 'category-group')">📋 Other</div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="ward-select">Ward Number <span class="req">*</span></label>
+                <div class="input-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+                    <select id="ward-select" class="">
+                        <option value="">Select ward…</option>
+                        <option>Ward 1</option><option>Ward 2</option><option>Ward 3</option>
+                        <option>Ward 4</option><option>Ward 5</option><option>Ward 6</option>
+                        <option>Ward 7</option><option>Ward 8</option><option>Ward 9</option>
+                        <option>Ward 10</option><option>Ward 11</option><option>Ward 12</option>
+                        <option>Ward 13</option><option>Ward 14</option><option>Ward 15</option>
+                        <option value="unknown">I'm not sure</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="location-hint">Location / Landmark</label>
+                <div class="input-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <input type="text" id="location-hint" placeholder="e.g. Near LP School">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="issue-title">Issue Title <span class="req">*</span></label>
+            <div class="input-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="15" y2="18"/></svg>
+                <input type="text" id="issue-title" placeholder="Brief summary of the issue" maxlength="100">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="issue-desc">Description <span class="req">*</span></label>
+            <textarea id="issue-desc" class="no-icon" placeholder="Describe the issue in detail. What is wrong? Since when? What impact does it have?" maxlength="800" oninput="updateCharCount()"></textarea>
+            <div class="char-count"><span id="char-count">0</span>/800</div>
+        </div>
+
+        <!-- Priority -->
+        <div class="form-group">
+            <label>Priority Level</label>
+            <div class="priority-group" id="priority-group">
+                <button class="priority-btn" data-val="low" onclick="selectPriority(this)">🟢 Low</button>
+                <button class="priority-btn" data-val="medium" onclick="selectPriority(this)">🟡 Medium</button>
+                <button class="priority-btn" data-val="high" onclick="selectPriority(this)">🔴 High / Urgent</button>
+            </div>
+        </div>
+
+        <hr style="border-color: var(--border); margin: 24px 0;">
+
+        <div class="submit-row">
+            <div class="submit-note">
+                Your feedback is reviewed by Panchayat administrators.<br>
+                Anonymous submissions are accepted.
+            </div>
+            <button class="btn-submit" onclick="submitFeedback()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Submit Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Success state -->
+    <div class="card success-card" id="success-card">
+        <div class="success-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>Report Submitted!</h2>
+        <p>Thank you for helping improve GramaGIS. A Panchayat administrator will review your report and update the database accordingly.</p>
+        <a href="index.html" class="btn-back">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Home
+        </a>
+    </div>
+
+</div>
+
+<script>
+    let selectedCategory = null;
+    let selectedPriority = null;
+
+    function selectChip(el, groupId) {
+        document.querySelectorAll(`#${groupId} .chip`).forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        selectedCategory = el.dataset.val;
+    }
+
+    function selectPriority(el) {
+        document.querySelectorAll('#priority-group .priority-btn').forEach(b => {
+            b.className = 'priority-btn';
+        });
+        const level = el.dataset.val;
+        el.classList.add(`active-${level}`);
+        selectedPriority = level;
+    }
+
+    function updateCharCount() {
+        const len = document.getElementById('issue-desc').value.length;
+        document.getElementById('char-count').textContent = len;
+    }
+
+    function submitFeedback() {
+        const ward  = document.getElementById('ward-select').value;
+        const title = document.getElementById('issue-title').value.trim();
+        const desc  = document.getElementById('issue-desc').value.trim();
+
+        if (!selectedCategory) { alert('Please select a category.'); return; }
+        if (!ward) { alert('Please select a ward.'); return; }
+        if (!title) { alert('Please enter an issue title.'); return; }
+        if (!desc)  { alert('Please enter a description.'); return; }
+
+        // In production: POST to /api/feedback with the form data
+        const payload = {
+            reporter_name:  document.getElementById('reporter-name').value.trim() || 'Anonymous',
+            reporter_contact: document.getElementById('reporter-phone').value.trim(),
+            category:       selectedCategory,
+            ward:           ward,
+            location_hint:  document.getElementById('location-hint').value.trim(),
+            title:          title,
+            description:    desc,
+            priority:       selectedPriority || 'low',
+            submitted_at:   new Date().toISOString()
+        };
+
+        console.log('Feedback payload (send to /api/feedback):', payload);
+
+        // Show success card
+        document.getElementById('feedback-form-card').style.display = 'none';
+        const success = document.getElementById('success-card');
+        success.classList.add('show');
+        success.style.display = 'block';
+    }
+</script>
+</body>
+</html>

@@ -33,7 +33,7 @@ layers['panchayat_basemap'] = panchayatBasemap;
 panchayatBasemap.addTo(map);
 
 // 3. Define Vector Layers
-window.allLayerNames = ['Banks', 'Colleges', 'Fire Stations', 'Government Offices', 'Hospitals', 'Hotels', 'Petrol Pumps', 'Police Stations', 'Post Offices', 'Restaurants', 'Schools', 'Toilets', 'Roads', 'Boundaries', 'Ward Boundary'];
+window.allLayerNames = ['Banks', 'Colleges', 'Fire Stations', 'Government Offices', 'Hospitals', 'Hotels', 'Petrol Pumps', 'Police Stations', 'Post Offices', 'Restaurants', 'Schools', 'Toilets', 'Roads', 'Wards', 'Ward Boundary'];
 allLayerNames.forEach(name => {
     let id = name.toLowerCase().replace(/\s+/g, '_');
     layers[id] = L.tileLayer.wms(geoServerUrl, {

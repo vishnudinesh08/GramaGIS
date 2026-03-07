@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GramaGIS – Data Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/edit.css">
+</head>
+</head>
+<body>
+
+<!-- Auth gate (shown if not logged in) -->
+<div id="auth-gate" style="display:none">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <p>You must be logged in to access this page.</p>
+    <a href="login.html" class="gate-redirect">Go to Login</a>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <span class="sidebar-logo">GramaGIS</span>
+        <span class="sidebar-role" id="sidebar-role">Administrator</span>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Management</div>
+        <button class="nav-item active" onclick="switchTab('data')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Data Manager
+        </button>
+        <button class="nav-item" onclick="switchTab('feedback')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Feedback Inbox
+            <span id="feedback-badge" style="margin-left:auto; background:rgba(231,76,60,0.2); color:#e74c3c; font-size:0.7rem; padding:1px 7px; border-radius:50px; font-weight:600;">3</span>
+        </button>
+
+        <div class="nav-section-label" style="margin-top:12px">Navigation</div>
+        <a href="map.html" class="nav-item">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+            Live Map
+        </a>
+        <a href="index.html" class="nav-item">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Home
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <button class="logout-btn" onclick="handleLogout()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign Out
+        </button>
+    </div>
+</aside>
+
+<!-- Main content -->
+<div class="main" id="main-content">
+
+    <!-- Top bar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="breadcrumb">GramaGIS / <span id="breadcrumb-title">Data Manager</span></div>
+        </div>
+        <div class="topbar-right">
+            <span style="font-size:0.8rem; color:var(--muted)">Logged in as: <strong id="logged-user" style="color:var(--text)">admin</strong></span>
+        </div>
+    </div>
+
+    <!-- DATA MANAGER TAB -->
+    <div id="tab-data">
+        <!-- Layer selector bar -->
+        <div class="layer-bar">
+            <label>Layer:</label>
+            <select class="layer-select" id="layer-select" onchange="loadLayerData()">
+                <option value="hospitals">Hospitals</option>
+                <option value="schools">Schools</option>
+                <option value="colleges">Colleges</option>
+                <option value="banks">Banks</option>
+                <option value="hotels">Hotels</option>
+                <option value="restaurants">Restaurants</option>
+                <option value="police_stations">Police Stations</option>
+                <option value="fire_stations">Fire Stations</option>
+                <option value="post_offices">Post Offices</option>
+                <option value="government_offices">Government Offices</option>
+                <option value="petrol_pumps">Petrol Pumps</option>
+                <option value="toilets">Public Toilets</option>
+                <option value="roads">Roads</option>
+            </select>
+
+            <div class="table-search-wrap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="table-search" id="table-search" placeholder="Search records…" oninput="filterTable()">
+            </div>
+
+            <button class="btn-add" onclick="openAddModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Record
+            </button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+            <table id="data-table">
+                <thead id="table-head"></thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="stats-bar">
+            <span>Layer: <strong id="stat-layer">Hospitals</strong></span>
+            <span>Records: <strong id="stat-count">0</strong></span>
+            <span style="margin-left:auto; font-size:0.75rem; color:var(--muted)">
+                Changes are sent to the backend via WFS-T. Connect GeoServer to persist.
+            </span>
+        </div>
+    </div>
+
+    <!-- FEEDBACK INBOX TAB -->
+    <div id="tab-feedback" style="display:none; flex:1; overflow-y:auto; padding:24px;">
+        <h2 style="font-size:1.1rem; margin-bottom:20px;">Feedback Inbox</h2>
+        <div id="feedback-list"></div>
+    </div>
+
+</div>
+
+<!-- ── EDIT / ADD MODAL ── -->
+<div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modal-title">Edit Record</h3>
+            <button class="modal-close" onclick="closeEditModal()">×</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+            <button class="btn-save" onclick="saveRecord()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── DELETE CONFIRM MODAL ── -->
+<div class="modal-overlay" id="delete-modal">
+    <div class="modal delete-modal">
+        <div class="modal-header">
+            <h3>Confirm Delete</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="delete-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </div>
+            <h3>Delete this record?</h3>
+            <p style="margin-top:8px">You are about to delete <span class="delete-target" id="delete-target-name">this record</span>. This action will send a WFS-T delete request to GeoServer and cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn-delete-confirm" onclick="confirmDelete()">Delete Record</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+    <span id="toast-icon">✓</span>
+    <span id="toast-text">Saved successfully</span>
+</div>
+
+<script>
+// ── Auth check ─────────────────────────────────────────────────────────────
+const auth = JSON.parse(sessionStorage.getItem('gramagis_auth') || 'null');
+if (!auth || !auth.loggedIn) {
+    document.getElementById('auth-gate').style.display = 'flex';
+    document.querySelector('.sidebar').style.display = 'none';
+    document.getElementById('main-content').style.display = 'none';
+} else {
+    document.getElementById('logged-user').textContent = auth.username;
+    document.getElementById('sidebar-role').textContent =
+        auth.role === 'superadmin' ? 'Super Admin' : 'Editor';
+}
+
+// ── Sample data (replace with real WFS fetch from GeoServer) ───────────────
+const SAMPLE_DATA = {
+    hospitals: [
+        { id:1, name:"Vazhathope PHC", ward_no:3, address:"Near Bus Stand", status:"active", date_established:"2005-06-01" },
+        { id:2, name:"Holy Cross Hospital", ward_no:7, address:"Main Road", status:"active", date_established:"1998-03-15" },
+        { id:3, name:"Govt Dispensary", ward_no:11, address:"Ward 11 Junction", status:"repair", date_established:"2001-09-20" },
+    ],
+    schools: [
+        { id:1, name:"GVHSS Vazhathope", ward_no:2, address:"School Lane", status:"active", date_established:"1965-06-01" },
+        { id:2, name:"LP School Ward 5", ward_no:5, address:"Near Temple", status:"active", date_established:"1972-07-01" },
+        { id:3, name:"St. Mary's HS", ward_no:9, address:"Church Road", status:"active", date_established:"1980-01-12" },
+        { id:4, name:"Old Primary School", ward_no:14, address:"West Lane", status:"inactive", date_established:"1955-06-01" },
+    ],
+    roads: [
+        { id:1, name:"Main Road", ward_no:1, road_type:"Tar", status:"active", date_established:"1990-01-01" },
+        { id:2, name:"Jungle Path", ward_no:8, road_type:"Mud", status:"damaged", date_established:"2000-01-01" },
+        { id:3, name:"Bypass Road", ward_no:4, road_type:"Concrete", status:"active", date_established:"2015-03-10" },
+    ]
+};
+
+// Generic fallback for layers without sample data
+['colleges','banks','hotels','restaurants','police_stations','fire_stations',
+ 'post_offices','government_offices','petrol_pumps','toilets'].forEach(k => {
+    SAMPLE_DATA[k] = [];
+});
+
+const COLUMNS = {
+    hospitals:   ['id','name','ward_no','address','status','date_established'],
+    schools:     ['id','name','ward_no','address','status','date_established'],
+    roads:       ['id','name','ward_no','road_type','status','date_established'],
+    _default:    ['id','name','ward_no','address','status']
+};
+
+let currentData   = [];
+let currentLayer  = 'hospitals';
+let editingId     = null;
+let deletingId    = null;
+
+// ── Load layer ──────────────────────────────────────────────────────────────
+function loadLayerData() {
+    currentLayer = document.getElementById('layer-select').value;
+    document.getElementById('table-search').value = '';
+
+    // In production: replace with fetch(`/api/proxy/wfs?layer=${currentLayer}`)
+    currentData = JSON.parse(JSON.stringify(SAMPLE_DATA[currentLayer] || []));
+
+    renderTable(currentData);
+    document.getElementById('stat-layer').textContent =
+        document.getElementById('layer-select').selectedOptions[0].text;
+    document.getElementById('stat-count').textContent = currentData.length;
+}
+
+function getCols() {
+    return COLUMNS[currentLayer] || COLUMNS['_default'];
+}
+
+function renderTable(data) {
+    const cols = getCols();
+    const head = document.getElementById('table-head');
+    const body = document.getElementById('table-body');
+
+    head.innerHTML = '<tr>' + cols.map(c =>
+        `<th>${c.replace(/_/g,' ').toUpperCase()}</th>`
+    ).join('') + '<th>ACTIONS</th></tr>';
+
+    if (data.length === 0) {
+        body.innerHTML = `<tr><td colspan="${cols.length+1}">
+            <div class="empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                <h3>No records found</h3>
+                <p>This layer has no data, or no records matched your search.</p>
+            </div>
+        </td></tr>`;
+        return;
+    }
+
+    body.innerHTML = data.map(row => {
+        const cells = cols.map(c => {
+            if (c === 'status') {
+                const map = { active:'badge-active', damaged:'badge-damaged', repair:'badge-repair', inactive:'badge-inactive' };
+                const cls = map[row[c]] || 'badge-inactive';
+                return `<td><span class="badge ${cls}">${row[c] || '—'}</span></td>`;
+            }
+            if (c === 'id') return `<td class="muted">#${row[c]}</td>`;
+            return `<td>${row[c] ?? '<span style="color:var(--muted)">—</span>'}</td>`;
+        }).join('');
+
+        return `<tr>
+            ${cells}
+            <td>
+                <div class="row-actions">
+                    <button class="action-btn edit" title="Edit" onclick="openEditModal(${row.id})">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="action-btn delete" title="Delete" onclick="openDeleteModal(${row.id}, '${row.name || 'this record'}')">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// ── Search ──────────────────────────────────────────────────────────────────
+function filterTable() {
+    const q = document.getElementById('table-search').value.toLowerCase();
+    const filtered = currentData.filter(row =>
+        Object.values(row).some(v => String(v).toLowerCase().includes(q))
+    );
+    renderTable(filtered);
+}
+
+// ── Edit modal ──────────────────────────────────────────────────────────────
+function openEditModal(id) {
+    const row = currentData.find(r => r.id === id);
+    if (!row) return;
+    editingId = id;
+
+    document.getElementById('modal-title').textContent = `Edit — ${row.name || 'Record #'+id}`;
+    const cols = getCols().filter(c => c !== 'id');
+    const body = document.getElementById('modal-body');
+
+    body.innerHTML = cols.map((col, i) => {
+        const val = row[col] ?? '';
+        if (col === 'status') {
+            const opts = ['active','repair','damaged','inactive'].map(s =>
+                `<option value="${s}" ${val===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
+            ).join('');
+            return `<div class="form-group"><label>${col.replace(/_/g,' ')}</label>
+                <select id="edit-${col}">${opts}</select></div>`;
+        }
+        if (col === 'road_type') {
+            const opts = ['Tar','Concrete','Mud','WBM'].map(s =>
+                `<option value="${s}" ${val===s?'selected':''}>${s}</option>`
+            ).join('');
+            return `<div class="form-group"><label>${col.replace(/_/g,' ')}</label>
+                <select id="edit-${col}">${opts}</select></div>`;
+        }
+        if (col === 'ward_no') {
+            return `<div class="form-group"><label>Ward Number</label>
+                <input type="number" id="edit-${col}" value="${val}" min="1" max="15"></div>`;
+        }
+        if (col === 'date_established') {
+            return `<div class="form-group"><label>Date Established</label>
+                <input type="date" id="edit-${col}" value="${val}"></div>`;
+        }
+        return `<div class="form-group"><label>${col.replace(/_/g,' ')}</label>
+            <input type="text" id="edit-${col}" value="${val}"></div>`;
+    }).join('');
+
+    document.getElementById('edit-modal').classList.add('open');
+}
+
+function openAddModal() {
+    editingId = null;
+    document.getElementById('modal-title').textContent = 'Add New Record';
+    const cols = getCols().filter(c => c !== 'id');
+    const body = document.getElementById('modal-body');
+
+    body.innerHTML = cols.map(col => {
+        if (col === 'status') {
+            return `<div class="form-group"><label>${col.replace(/_/g,' ')}</label>
+                <select id="edit-${col}">
+                    <option value="active">Active</option>
+                    <option value="repair">Under Repair</option>
+                    <option value="damaged">Damaged</option>
+                    <option value="inactive">Inactive</option>
+                </select></div>`;
+        }
+        if (col === 'ward_no') {
+            return `<div class="form-group"><label>Ward Number</label>
+                <input type="number" id="edit-${col}" placeholder="1–15" min="1" max="15"></div>`;
+        }
+        if (col === 'date_established') {
+            return `<div class="form-group"><label>Date Established</label>
+                <input type="date" id="edit-${col}"></div>`;
+        }
+        return `<div class="form-group"><label>${col.replace(/_/g,' ')}</label>
+            <input type="text" id="edit-${col}" placeholder="Enter ${col.replace(/_/g,' ')}"></div>`;
+    }).join('');
+
+    document.getElementById('edit-modal').classList.add('open');
+}
+
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+    editingId = null;
+}
+
+function saveRecord() {
+    const cols = getCols().filter(c => c !== 'id');
+    const updated = {};
+    cols.forEach(col => {
+        const el = document.getElementById(`edit-${col}`);
+        if (el) updated[col] = el.value;
+    });
+
+    if (!updated.name || !updated.ward_no) {
+        showToast('Name and Ward are required.', 'error');
+        return;
+    }
+
+    if (editingId !== null) {
+        // Update existing
+        const idx = currentData.findIndex(r => r.id === editingId);
+        if (idx !== -1) {
+            currentData[idx] = { ...currentData[idx], ...updated };
+            showToast(`"${updated.name}" updated successfully.`, 'success');
+        }
+    } else {
+        // Add new
+        const newId = currentData.length ? Math.max(...currentData.map(r=>r.id)) + 1 : 1;
+        currentData.push({ id: newId, ...updated });
+        showToast(`"${updated.name}" added successfully.`, 'success');
+    }
+
+    document.getElementById('stat-count').textContent = currentData.length;
+    renderTable(currentData);
+    closeEditModal();
+
+    // In production: send WFS-T insert/update request via /api/proxy/wfst
+    console.log('WFS-T payload (send to /api/proxy/wfst):', { layer: currentLayer, action: editingId ? 'update' : 'insert', data: updated });
+}
+
+// ── Delete modal ─────────────────────────────────────────────────────────────
+function openDeleteModal(id, name) {
+    deletingId = id;
+    document.getElementById('delete-target-name').textContent = `"${name}"`;
+    document.getElementById('delete-modal').classList.add('open');
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.remove('open');
+    deletingId = null;
+}
+
+function confirmDelete() {
+    if (deletingId === null) return;
+    const deleted = currentData.find(r => r.id === deletingId);
+    currentData = currentData.filter(r => r.id !== deletingId);
+    renderTable(currentData);
+    document.getElementById('stat-count').textContent = currentData.length;
+    closeDeleteModal();
+    showToast(`"${deleted?.name || 'Record'}" deleted.`, 'success');
+
+    // In production: send WFS-T delete request via /api/proxy/wfst
+    console.log('WFS-T delete (send to /api/proxy/wfst):', { layer: currentLayer, id: deletingId });
+}
+
+// ── Feedback inbox ──────────────────────────────────────────────────────────
+const SAMPLE_FEEDBACK = [
+    { id:1, reporter:'Rajesh Kumar', category:'road', ward:'Ward 2', title:'Potholes near school gate', desc:'Road in front of GVHSS has large potholes since last monsoon. Very dangerous for school children.', priority:'high', submitted_at:'2026-03-05' },
+    { id:2, reporter:'Anonymous', category:'map_error', ward:'Ward 7', title:'Hospital location is wrong on map', desc:'Holy Cross Hospital pin on the map is about 200m off. Should be near the old bus stand.', priority:'medium', submitted_at:'2026-03-04' },
+    { id:3, reporter:'Meena S.', category:'missing', ward:'Ward 11', title:'ATM not shown on map', desc:'There is a new SBI ATM near the post office in Ward 11 that is not shown on the GramaGIS map.', priority:'low', submitted_at:'2026-03-03' },
+];
+
+function renderFeedback() {
+    const container = document.getElementById('feedback-list');
+    const priorityColors = { high:'#e74c3c', medium:'#f39c12', low:'#2ecc71' };
+
+    container.innerHTML = SAMPLE_FEEDBACK.map(f => `
+        <div style="background:var(--surface); border:1px solid var(--border); border-left:3px solid ${priorityColors[f.priority]}; border-radius:12px; padding:20px; margin-bottom:14px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:10px;">
+                <div>
+                    <div style="font-weight:600; font-size:0.95rem;">${f.title}</div>
+                    <div style="font-size:0.78rem; color:var(--muted); margin-top:3px;">
+                        ${f.ward} · ${f.category.replace('_',' ')} · by ${f.reporter} · ${f.submitted_at}
+                    </div>
+                </div>
+                <span style="background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:6px; padding:3px 10px; font-size:0.75rem; color:${priorityColors[f.priority]}; white-space:nowrap; flex-shrink:0;">
+                    ${f.priority.toUpperCase()}
+                </span>
+            </div>
+            <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">${f.desc}</p>
+            <div style="margin-top:14px; display:flex; gap:8px;">
+                <button onclick="markResolved(${f.id}, this)" style="background:rgba(46,204,113,0.1); border:1px solid rgba(46,204,113,0.3); color:var(--green); font-family:'DM Sans',sans-serif; font-size:0.8rem; padding:6px 14px; border-radius:6px; cursor:pointer; transition:all 0.2s;">
+                    ✓ Mark Resolved
+                </button>
+                <button style="background:none; border:1px solid var(--border); color:var(--muted); font-family:'DM Sans',sans-serif; font-size:0.8rem; padding:6px 14px; border-radius:6px; cursor:pointer;">
+                    Open in Map
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function markResolved(id, btn) {
+    btn.closest('div[style*="border-left"]').style.opacity = '0.4';
+    btn.textContent = '✓ Resolved';
+    btn.disabled = true;
+    showToast('Report marked as resolved.', 'success');
+}
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(tab) {
+    document.getElementById('tab-data').style.display     = tab === 'data'     ? 'contents' : 'none';
+    document.getElementById('tab-feedback').style.display = tab === 'feedback' ? 'flex' : 'none';
+    document.getElementById('breadcrumb-title').textContent =
+        tab === 'data' ? 'Data Manager' : 'Feedback Inbox';
+
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    if (tab === 'feedback') renderFeedback();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(message, type='success') {
+    const toast = document.getElementById('toast');
+    toast.className = `toast toast-${type} show`;
+    document.getElementById('toast-text').textContent = message;
+    document.getElementById('toast-icon').textContent = type === 'success' ? '✓' : '✕';
+    setTimeout(() => { toast.classList.remove('show'); }, 3000);
+}
+
+// ── Logout ─────────────────────────────────────────────────────────────────
+function handleLogout() {
+    sessionStorage.removeItem('gramagis_auth');
+    window.location.href = 'index.html';
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+loadLayerData();
+</script>
+</body>
+</html>
