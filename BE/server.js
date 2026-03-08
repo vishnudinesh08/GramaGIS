@@ -1,52 +1,70 @@
-// server.js — GramaGIS Express Backend
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import authRoutes    from "./routes/auth.js";
-import queryRoutes   from "./routes/query.js";
-import proxyRoutes   from "./routes/proxy.js";
-import feedbackRoutes from "./routes/feedback.js";
+// server.js - GramaGIS Backend Server
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+// ES6 module fix for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const app  = express();
-const PORT = process.env.PORT || 3000;
+const app = express();
+const PORT = 5500;
 
-// ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors({ origin: "*" }));
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-app.use((req, _res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-    next();
+// Serve static files from FE directory
+app.use('/FE', express.static(path.join(__dirname, '../FE')));
+
+// Root route
+app.get('/', (req, res) => {
+    res.redirect('/FE/html/index.html');
 });
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-app.use("/api/auth",     authRoutes);
-app.use("/api/nlquery",  queryRoutes);
-app.use("/api/proxy",    proxyRoutes);
-app.use("/api/feedback", feedbackRoutes);
-
-// ── Health check ──────────────────────────────────────────────────────────────
-app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", time: new Date().toISOString() });
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'OK', message: 'GramaGIS Backend is running' });
 });
 
-// ── 404 ───────────────────────────────────────────────────────────────────────
-app.use((_req, res) => res.status(404).json({ error: "Route not found" }));
-
-// ── Error handler ─────────────────────────────────────────────────────────────
-app.use((err, _req, res, _next) => {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+// Example API route for NLP query (placeholder)
+app.post('/api/nlquery', async (req, res) => {
+    try {
+        const { query, schema } = req.body;
+        
+        // TODO: Implement Gemini API integration here
+        // For now, return a dummy response
+        res.json({
+            text: JSON.stringify({
+                layer: "hospitals",
+                cql: "ward_no = 3"
+            })
+        });
+    } catch (error) {
+        console.error('NLP Query Error:', error);
+        res.status(500).json({ error: 'Query processing failed' });
+    }
 });
 
+// Start server
 app.listen(PORT, () => {
-    console.log(`\n🌿 GramaGIS backend → http://localhost:${PORT}`);
-    console.log(`   POST /api/auth/login`);
-    console.log(`   POST /api/nlquery`);
-    console.log(`   GET  /api/proxy/wfs?layer=hospitals`);
-    console.log(`   POST /api/proxy/wfst`);
-    console.log(`   GET  /api/feedback`);
-    console.log(`   POST /api/feedback\n`);
+    console.log(`
+╔═══════════════════════════════════════════════╗
+║        GramaGIS Backend Server                ║
+║  Server running at http://localhost:${PORT}    ║
+║                                               ║
+║  Frontend: http://localhost:${PORT}/FE/html/  ║
+║  Map Page: http://localhost:${PORT}/FE/html/map.html ║
+╚═══════════════════════════════════════════════╝
+    `);
+});
+
+// Error handling
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (error) => {
+    console.error('Unhandled Rejection:', error);
 });

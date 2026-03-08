@@ -37,7 +37,7 @@
                 <label for="reporter-name">Full Name</label>
                 <div class="input-wrap">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    <input type="text" id="reporter-name" placeholder="e.g. Rajesh Kumar" class="">
+                    <input type="text" id="reporter-name" placeholder="e.g. Rajesh Kumar">
                 </div>
             </div>
             <div class="form-group">
@@ -51,7 +51,6 @@
 
         <div class="card-section-title" style="margin-top:8px">Issue Details <span style="color:#e74c3c">*</span></div>
 
-        <!-- Issue category chips -->
         <div class="form-group">
             <label>Category <span class="req">*</span></label>
             <div class="chip-group" id="category-group">
@@ -69,7 +68,7 @@
                 <label for="ward-select">Ward Number <span class="req">*</span></label>
                 <div class="input-wrap">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-                    <select id="ward-select" class="">
+                    <select id="ward-select">
                         <option value="">Select ward…</option>
                         <option>Ward 1</option><option>Ward 2</option><option>Ward 3</option>
                         <option>Ward 4</option><option>Ward 5</option><option>Ward 6</option>
@@ -103,7 +102,6 @@
             <div class="char-count"><span id="char-count">0</span>/800</div>
         </div>
 
-        <!-- Priority -->
         <div class="form-group">
             <label>Priority Level</label>
             <div class="priority-group" id="priority-group">
@@ -120,7 +118,7 @@
                 Your feedback is reviewed by Panchayat administrators.<br>
                 Anonymous submissions are accepted.
             </div>
-            <button class="btn-submit" onclick="submitFeedback()">
+            <button class="btn-submit" id="submit-btn" onclick="submitFeedback()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 Submit Report
             </button>
@@ -172,30 +170,46 @@
         const desc  = document.getElementById('issue-desc').value.trim();
 
         if (!selectedCategory) { alert('Please select a category.'); return; }
-        if (!ward) { alert('Please select a ward.'); return; }
-        if (!title) { alert('Please enter an issue title.'); return; }
-        if (!desc)  { alert('Please enter a description.'); return; }
+        if (!ward)              { alert('Please select a ward.'); return; }
+        if (!title)             { alert('Please enter an issue title.'); return; }
+        if (!desc)              { alert('Please enter a description.'); return; }
 
-        // In production: POST to /api/feedback with the form data
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+
         const payload = {
-            reporter_name:  document.getElementById('reporter-name').value.trim() || 'Anonymous',
+            reporter_name:    document.getElementById('reporter-name').value.trim() || 'Anonymous',
             reporter_contact: document.getElementById('reporter-phone').value.trim(),
-            category:       selectedCategory,
-            ward:           ward,
-            location_hint:  document.getElementById('location-hint').value.trim(),
-            title:          title,
-            description:    desc,
-            priority:       selectedPriority || 'low',
-            submitted_at:   new Date().toISOString()
+            category:         selectedCategory,
+            ward,
+            location_hint:    document.getElementById('location-hint').value.trim(),
+            title,
+            description:      desc,
+            priority:         selectedPriority || 'low'
         };
 
-        console.log('Feedback payload (send to /api/feedback):', payload);
-
-        // Show success card
-        document.getElementById('feedback-form-card').style.display = 'none';
-        const success = document.getElementById('success-card');
-        success.classList.add('show');
-        success.style.display = 'block';
+        fetch('http://localhost:3000/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('feedback-form-card').style.display = 'none';
+                const success = document.getElementById('success-card');
+                success.classList.add('show');
+                success.style.display = 'block';
+            } else {
+                throw new Error(data.error || 'Submission failed.');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.textContent = 'Submit Report';
+            alert('Error: ' + err.message + '\n\nIs the backend running on port 3000?');
+        });
     }
 </script>
 </body>

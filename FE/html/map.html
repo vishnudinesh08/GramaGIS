@@ -12,15 +12,15 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-    <!-- App Styles -->
-    <link rel="stylesheet" href="../css/map.css" />
+    <!-- App Styles - Using absolute path from server root -->
+    <link rel="stylesheet" href="/FE/css/map.css" />
 </head>
 <body>
 
     <!-- ============ SIDEBAR ============ -->
     <div id="sidebar">
         <div class="sidebar-brand">
-            <a href="index.html" class="home-link">&#8592; Back to Home</a>
+            <a href="/FE/html/index.html" class="home-link">&#8592; Back to Home</a>
             <div class="brand-row">
                 <div class="brand-dot">&#128506;</div>
                 <div class="brand-text">
@@ -137,19 +137,6 @@
                     </div>
                 </div>
             </details>
-
-            <details>
-                <summary>
-                    <span class="summary-icon">&#9881;</span> Map Settings
-                    <span class="summary-arrow">&#9654;</span>
-                </summary>
-                <div class="layer-list">
-                    <div class="layer-item">
-                        <input type="checkbox" id="check-world_map" onchange="toggleLayer('world_map', this)">
-                        <label for="check-world_map">World Map (Unlock Panning)</label>
-                    </div>
-                </div>
-            </details>
         </div>
 
         <div class="sidebar-footer">
@@ -157,42 +144,45 @@
         </div>
     </div>
 
-    <!-- ============ SEARCH BAR ============ -->
-    <div id="smart-search-container">
-        <div class="search-wrapper">
-            <input
-                type="text"
-                id="userInput"
-                placeholder="e.g. show hospitals in ward 3, damaged roads..."
-                onkeydown="if(event.key==='Enter') triggerSearch()"
-            >
-            <button id="search-btn" onclick="triggerSearch()">&#128269;</button>
+    <!-- ============ MAP CONTAINER ============ -->
+    <div id="map-container">
+        <!-- ============ SEARCH BAR ============ -->
+        <div id="smart-search-container">
+            <div class="search-wrapper">
+                <input
+                    type="text"
+                    id="userInput"
+                    placeholder="e.g. show hospitals in ward 3, damaged roads..."
+                    onkeydown="if(event.key==='Enter') triggerSearch()"
+                >
+                <button id="search-btn" onclick="triggerSearch()">&#128269;</button>
+            </div>
         </div>
+
+        <!-- ============ MAP ============ -->
+        <div id="map"></div>
+
+        <!-- ============ INFO PANEL ============ -->
+        <div id="info-panel">
+            <div class="panel-header">
+                <h3 id="info-title">Feature Details</h3>
+                <span id="info-subtitle">Vazhathope Panchayat</span>
+                <button class="close-btn" onclick="closeInfoPanel()">&#10005;</button>
+            </div>
+            <div class="panel-divider"></div>
+            <div id="info-content">
+                <p>Search for a place to see details here...</p>
+            </div>
+        </div>
+
+        <!-- ============ TOAST ============ -->
+        <div id="toast"></div>
     </div>
 
-    <!-- ============ MAP ============ -->
-    <div id="map"></div>
-
-    <!-- ============ INFO PANEL ============ -->
-    <div id="info-panel">
-        <div class="panel-header">
-            <h3 id="info-title">Feature Details</h3>
-            <span id="info-subtitle">Vazhathope Panchayat</span>
-            <button class="close-btn" onclick="closeInfoPanel()">&#10005;</button>
-        </div>
-        <div class="panel-divider"></div>
-        <div id="info-content">
-            <p>Search for a place to see details here...</p>
-        </div>
-    </div>
-
-    <!-- ============ TOAST ============ -->
-    <div id="toast"></div>
-
-    <!-- ============ SCRIPTS ============ -->
+    <!-- ============ SCRIPTS - Using absolute paths from server root ============ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="query.js"></script>
-    <script src="map.js"></script>
+    <script src="/FE/js/query.js"></script>
+    <script src="/FE/js/map.js"></script>
 
 </body>
 </html>

@@ -1,124 +1,81 @@
-// routes/proxy.js — GeoServer WFS & WFS-T proxy
-//
-// GET  /api/proxy/wfs?layer=hospitals&cql=ward_no=3
-//      → proxies to GeoServer WFS GetFeature (returns GeoJSON)
-//
-// POST /api/proxy/wfst  { layer, action, data, id }
-//      → proxies WFS-T insert / update / delete to GeoServer
-//      → requires JWT
+// BE/routes/proxy.js
+const express = require('express');
+const router  = express.Router();
+const fetch   = (...a) => import('node-fetch').then(({default:f}) => f(...a));
 
-import { Router } from "express";
-import fetch from "node-fetch";
-import { requireAuth } from "../middleware/auth.js";
-import {
-    GEOSERVER_URL, GEOSERVER_WORKSPACE,
-    geoServerAuth, toLayerName, ALLOWED_LAYERS
-} from "../config/geoserver.js";
+const GEO_BASE  = process.env.GEOSERVER_URL || 'http://localhost:8080/geoserver';
+const GEO_USER  = process.env.GEOSERVER_USER || 'admin';
+const GEO_PASS  = process.env.GEOSERVER_PASS || 'geoserver';
+const WORKSPACE = 'gramagis';
 
-const router = Router();
+function geoAuth() {
+    return 'Basic ' + Buffer.from(GEO_USER + ':' + GEO_PASS).toString('base64');
+}
 
-// ── GET /api/proxy/wfs ────────────────────────────────────────────────────────
-router.get("/wfs", async (req, res) => {
-    const { layer, cql, maxFeatures = 1000 } = req.query;
-
-    if (!layer)                    return res.status(400).json({ error: "layer param is required." });
-    if (!ALLOWED_LAYERS.has(layer)) return res.status(400).json({ error: `Unknown layer: ${layer}` });
-
-    const typeName = `${GEOSERVER_WORKSPACE}:${toLayerName(layer)}`;
-    const params   = new URLSearchParams({
-        service:      "WFS",
-        version:      "1.0.0",
-        request:      "GetFeature",
-        typeName,
-        outputFormat: "application/json",
-        maxFeatures:  String(maxFeatures)
-    });
-    if (cql && cql.trim()) params.set("CQL_FILTER", cql.trim());
-
-    const url = `${GEOSERVER_URL}/${GEOSERVER_WORKSPACE}/ows?${params}`;
-
+// ── GET /api/proxy/wfs?layer=Hospitals&cql=ward_no=3 ─────────────────────────
+router.get('/wfs', async (req, res) => {
     try {
-        const upstream = await fetch(url, { headers: { Authorization: geoServerAuth() } });
-        if (!upstream.ok) {
-            const txt = await upstream.text();
-            console.error("GeoServer WFS error:", txt.slice(0, 300));
-            return res.status(502).json({ error: "GeoServer returned an error." });
-        }
-        res.json(await upstream.json());
-    } catch (err) {
-        console.error("WFS proxy error:", err.message);
-        res.status(502).json({ error: "Could not reach GeoServer." });
-    }
-});
+        const layerName = req.query.layer;
+        const cql       = req.query.cql || '';
+        if (!layerName) return res.status(400).json({ error: 'layer param required' });
 
-// ── POST /api/proxy/wfst ──────────────────────────────────────────────────────
-router.post("/wfst", requireAuth, async (req, res) => {
-    const { layer, action, data, id } = req.body;
+        let url = `${GEO_BASE}/${WORKSPACE}/ows`
+            + `?service=WFS&version=1.0.0&request=GetFeature`
+            + `&typeName=${WORKSPACE}:${encodeURIComponent(layerName)}`
+            + `&outputFormat=application/json`
+            + `&maxFeatures=200`;
 
-    if (!layer || !action)          return res.status(400).json({ error: "layer and action are required." });
-    if (!ALLOWED_LAYERS.has(layer)) return res.status(400).json({ error: `Unknown layer: ${layer}` });
-    if ((action === "update" || action === "delete") && !id)
-        return res.status(400).json({ error: "id is required for update/delete." });
+        if (cql) url += `&CQL_FILTER=${encodeURIComponent(cql)}`;
 
-    const typeName = `${GEOSERVER_WORKSPACE}:${toLayerName(layer)}`;
-    let xml;
-    try { xml = buildWFST(typeName, action, data || {}, id); }
-    catch (e) { return res.status(400).json({ error: e.message }); }
-
-    const url = `${GEOSERVER_URL}/${GEOSERVER_WORKSPACE}/wfs`;
-
-    try {
-        const upstream = await fetch(url, {
-            method:  "POST",
-            headers: { "Content-Type": "application/xml", Authorization: geoServerAuth() },
-            body:    xml
+        const geoRes = await fetch(url, {
+            headers: { Authorization: geoAuth() }
         });
-        const text = await upstream.text();
-        if (!upstream.ok) {
-            console.error("GeoServer WFS-T error:", text.slice(0, 300));
-            return res.status(502).json({ error: "WFS-T request failed.", detail: text.slice(0, 200) });
+        if (!geoRes.ok) {
+            const txt = await geoRes.text();
+            return res.status(geoRes.status).json({ error: txt });
         }
-        res.json({ success: true, rawResponse: text });
+        const data = await geoRes.json();
+        res.json(data);
     } catch (err) {
-        console.error("WFS-T proxy error:", err.message);
-        res.status(502).json({ error: "Could not reach GeoServer." });
+        console.error('WFS proxy error:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
-// ── WFS-T XML builder ─────────────────────────────────────────────────────────
-function esc(v) {
-    if (v == null) return "";
-    return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-                    .replace(/"/g,"&quot;").replace(/'/g,"&apos;");
-}
+// ── POST /api/proxy/wfst  (transactional edits — admin only) ──────────────────
+router.post('/wfst', async (req, res) => {
+    try {
+        const xml = req.body;
+        if (!xml) return res.status(400).json({ error: 'XML body required' });
 
-const SKIP = new Set(["id","gid","geom","the_geom","wkb_geometry"]);
-const NS   = `<?xml version="1.0" encoding="UTF-8"?>
-<wfs:Transaction service="WFS" version="1.1.0"
-    xmlns:wfs="http://www.opengis.net/wfs"
-    xmlns:ogc="http://www.opengis.net/ogc"
-    xmlns:gml="http://www.opengis.net/gml"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">`;
-
-function buildWFST(typeName, action, data, id) {
-    const localName = typeName.split(":")[1];
-    const props = Object.entries(data).filter(([k]) => !SKIP.has(k));
-
-    if (action === "insert") {
-        const fields = props.map(([k,v]) => `      <${localName}:${k}>${esc(v)}</${localName}:${k}>`).join("\n");
-        return `${NS}\n  <wfs:Insert>\n    <${typeName}>\n${fields}\n    </${typeName}>\n  </wfs:Insert>\n</wfs:Transaction>`;
+        const geoRes = await fetch(`${GEO_BASE}/wfs`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/xml',
+                Authorization: geoAuth()
+            },
+            body: xml
+        });
+        const text = await geoRes.text();
+        res.status(geoRes.status).send(text);
+    } catch (err) {
+        console.error('WFS-T proxy error:', err);
+        res.status(500).json({ error: err.message });
     }
-    if (action === "update") {
-        const fields = props.map(([k,v]) =>
-            `    <wfs:Property>\n      <wfs:Name>${k}</wfs:Name>\n      <wfs:Value>${esc(v)}</wfs:Value>\n    </wfs:Property>`
-        ).join("\n");
-        return `${NS}\n  <wfs:Update typeName="${typeName}">\n${fields}\n    <ogc:Filter><ogc:FeatureId fid="${typeName}.${id}"/></ogc:Filter>\n  </wfs:Update>\n</wfs:Transaction>`;
-    }
-    if (action === "delete") {
-        return `${NS}\n  <wfs:Delete typeName="${typeName}">\n    <ogc:Filter><ogc:FeatureId fid="${typeName}.${id}"/></ogc:Filter>\n  </wfs:Delete>\n</wfs:Transaction>`;
-    }
-    throw new Error(`Unknown action "${action}". Must be insert, update, or delete.`);
-}
+});
 
-export default router;
+// ── GET /api/proxy/wms  (optional — for future use) ───────────────────────────
+router.get('/wms', async (req, res) => {
+    try {
+        const params = new URLSearchParams(req.query).toString();
+        const url    = `${GEO_BASE}/wms?${params}`;
+        const geoRes = await fetch(url, { headers: { Authorization: geoAuth() } });
+        const buf    = await geoRes.buffer();
+        res.set('Content-Type', geoRes.headers.get('content-type'));
+        res.send(buf);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+module.exports = router;

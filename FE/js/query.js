@@ -1,12 +1,11 @@
-// query.js  —  GramaGIS Smart Query Engine
-// Fixes:
-//   1. filterParts declared BEFORE year-filter block (was used before declaration)
-//   2. Gemini API replaces the old keyword-only matching
+// query.js — GramaGIS Smart Query Engine
+// All WFS calls go through Express backend to avoid CORS issues
 
-// ─── Layer registry ───────────────────────────────────────────────────────────
-const layerMapping = {
+var API_BASE = "http://localhost:3000";
+
+// ── Layer registry ────────────────────────────────────────────────────────────
+var layerMapping = {
     "bank":        "banks",
-    "boundary":    "boundaries",
     "college":     "colleges",
     "fire":        "fire_stations",
     "office":      "government_offices",
@@ -19,56 +18,60 @@ const layerMapping = {
     "road":        "roads",
     "school":      "schools",
     "toilet":      "toilets",
-    "ward":        "ward_boundary"
+    "ward":        "ward_boundary",
+    "wards":       "wards"
 };
 
-// ─── Schema hint injected into every Gemini prompt ───────────────────────────
-// Tells Gemini which layers and columns exist so it can produce valid CQL.
-const DB_SCHEMA_HINT = `
+// checkbox-id → exact GeoServer layer name
+var LAYER_NAMES = {
+    'banks':'Banks', 'colleges':'Colleges', 'fire_stations':'Fire Stations',
+    'government_offices':'Government Offices', 'hospitals':'Hospitals',
+    'hotels':'Hotels', 'petrol_pumps':'Petrol Pumps', 'police_stations':'Police Stations',
+    'post_offices':'Post Offices', 'restaurants':'Restaurants', 'roads':'Roads',
+    'schools':'Schools', 'toilets':'Toilets', 'ward_boundary':'Ward Boundary', 'wards':'Wards'
+};
+
+// ── Schema hint for Gemini ────────────────────────────────────────────────────
+var DB_SCHEMA_HINT = `
 You are a GeoServer CQL filter generator for a Panchayat GIS system called GramaGIS.
 
 Available layers and their key attributes:
-- banks            : name, ward_no, address
-- boundaries       : name, ward_no
-- colleges         : name, ward_no, address, status
-- fire_stations    : name, ward_no, address, status
+- banks              : name, ward_no, address
+- colleges           : name, ward_no, address, status
+- fire_stations      : name, ward_no, address, status
 - government_offices : name, ward_no, address, status
-- hospitals        : name, ward_no, address, status, date_established
-- hotels           : name, ward_no, address, status
-- petrol_pumps     : name, ward_no, address, status
-- police_stations  : name, ward_no, address, status
-- post_offices     : name, ward_no, address, status
-- restaurants      : name, ward_no, address, status
-- roads            : name, ward_no, road_type, status, date_established
-- schools          : name, ward_no, address, status, date_established
-- toilets          : name, ward_no, address, status
-- ward_boundary    : ward_no, ward_name
+- hospitals          : name, ward_no, address, status, date_established
+- hotels             : name, ward_no, address, status
+- petrol_pumps       : name, ward_no, address, status
+- police_stations    : name, ward_no, address, status
+- post_offices       : name, ward_no, address, status
+- restaurants        : name, ward_no, address, status
+- roads              : name, ward_no, road_type, status, date_established
+- schools            : name, ward_no, address, status, date_established
+- toilets            : name, ward_no, address, status
+- ward_boundary      : ward_no, ward_name
+- wards              : ward_no, ward_name
 
 Rules:
 - Respond ONLY with a JSON object — no markdown, no explanation.
 - Format: { "layer": "<layer_key>", "cql": "<CQL filter string or empty string>" }
-- Use ILIKE for text matching (case-insensitive). Example: name ILIKE '%Sunrise%'
-- Use = for exact matches. Example: ward_no = 3
-- Use AND to combine conditions. Example: ward_no = 3 AND status = 'damaged'
-- For date filters use: date_established >= '2010-01-01'
-- If the query just asks to SHOW a layer with no filter, return an empty cql string "".
+- Use ILIKE for text matching. Example: name ILIKE '%Sunrise%'
+- Use = for exact numbers. Example: ward_no = 3
+- Use AND to combine. Example: ward_no = 3 AND status = 'Active'
+- If the query just asks to SHOW a layer with no filter, return cql: ""
 - If you cannot map the query to any layer, return { "layer": null, "cql": "" }
 `;
 
-// ─── Gemini API call ──────────────────────────────────────────────────────────
-// Calls the Express.js backend proxy at /api/nlquery so the Gemini key
-// never leaks to the browser.  The backend forwards to Gemini and returns
-// the raw text response.
+// ── Gemini call via backend ───────────────────────────────────────────────────
 async function callGeminiNL2CQL(userQuery) {
     try {
-        const response = await fetch("/api/nlquery", {
+        const response = await fetch(API_BASE + "/api/nlquery", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ query: userQuery, schema: DB_SCHEMA_HINT })
         });
-        if (!response.ok) throw new Error(`Backend error: ${response.status}`);
+        if (!response.ok) throw new Error("Backend error: " + response.status);
         const data = await response.json();
-        // data.text is the raw string Gemini returned
         const cleaned = data.text.replace(/```json|```/g, "").trim();
         return JSON.parse(cleaned);
     } catch (err) {
@@ -77,174 +80,108 @@ async function callGeminiNL2CQL(userQuery) {
     }
 }
 
-// ─── Fallback: keyword-only parser (used when Gemini is unavailable) ──────────
-// FIX: filterParts is now declared FIRST, before the year-filter block uses it.
+// ── Keyword fallback ──────────────────────────────────────────────────────────
 function keywordFallback(input) {
     let targetLayerKey = null;
     for (let keyword in layerMapping) {
-        if (input.includes(keyword)) {
-            targetLayerKey = layerMapping[keyword];
-            break;
-        }
+        if (input.includes(keyword)) { targetLayerKey = layerMapping[keyword]; break; }
     }
     if (!targetLayerKey) return null;
 
-    // FIX: declare filterParts HERE, before the year block references it
     let filterParts = [];
-
-    // Year filter
+    const wardMatch = input.match(/ward\s*(\d+)/);
+    if (wardMatch) filterParts.push("ward_no = " + wardMatch[1]);
+    if (input.includes("damaged") || input.includes("repair")) filterParts.push("status = 'damaged'");
     const yearMatch = input.match(/\d{4}/);
     if (yearMatch) {
-        const year = yearMatch[0];
-        if (input.includes("after") || input.includes("newer")) {
-            filterParts.push(`date_established >= '${year}-01-01'`);
-        } else if (input.includes("before") || input.includes("older")) {
-            filterParts.push(`date_established <= '${year}-12-31'`);
-        } else {
-            filterParts.push(`date_established >= '${year}-01-01' AND date_established <= '${year}-12-31'`);
-        }
+        const y = yearMatch[0];
+        if (input.includes("after"))       filterParts.push("date_established >= '" + y + "-01-01'");
+        else if (input.includes("before")) filterParts.push("date_established <= '" + y + "-12-31'");
     }
-
-    // Status filter
-    if (input.includes("damaged") || input.includes("repair")) {
-        filterParts.push("status = 'damaged'");
-    }
-
-    // Ward filter
-    const wardMatch = input.match(/ward\s*(\d+)/);
-    if (wardMatch) {
-        filterParts.push(`ward_no = ${wardMatch[1]}`);
-    }
-
     return { layer: targetLayerKey, cql: filterParts.join(" AND ") };
 }
 
-// ─── Main exported function ───────────────────────────────────────────────────
+// ── Show toast notification ───────────────────────────────────────────────────
+function showToast(msg, type) {
+    var t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.className = 'show ' + (type || '');
+    setTimeout(function() { t.className = ''; }, 3500);
+}
+
+// ── Main query function ───────────────────────────────────────────────────────
 window.executeSmartQuery = async function(layers) {
     const inputField = document.getElementById('userInput');
     const input = inputField.value.trim();
     if (!input) return;
 
-    const originalPlaceholder = inputField.placeholder;
-
-    // Show a loading state on the search button
-    const btn = inputField.nextElementSibling;
-    const originalBtnText = btn.textContent;
-    btn.textContent = "⏳";
+    const btn = document.getElementById('search-btn');
+    btn.innerHTML = '<div class="btn-spinner"></div>';
     btn.disabled = true;
 
-    // ── Step 1: Try Gemini first, fall back to keyword parser ────────────────
+    // Step 1: AI or keyword parse
     let result = await callGeminiNL2CQL(input);
+    if (!result || !result.layer) result = keywordFallback(input.toLowerCase());
 
-    if (!result || !result.layer) {
-        // Gemini unavailable or returned null layer → keyword fallback
-        result = keywordFallback(input.toLowerCase());
-    }
-
-    btn.textContent = originalBtnText;
+    btn.innerHTML = '&#128269;';
     btn.disabled = false;
 
     if (!result || !result.layer) {
-        showNoResultsFeedback(inputField, "Try: Schools in Ward 3, damaged roads...");
+        showToast("No matching layer found. Try: 'hospitals in ward 3'", "error");
         return;
     }
 
-    const { layer: targetLayerKey, cql: finalCQL } = result;
+    const { layer: layerKey, cql } = result;
 
-    // ── Step 2: Reset all WMS CQL filters ────────────────────────────────────
-    Object.keys(layers).forEach(key => {
-        if (layers[key].setParams && key !== 'world_map' && key !== 'panchayat_basemap') {
-            layers[key].setParams({ CQL_FILTER: null });
+    // Step 2: Reset all CQL filters
+    Object.keys(layers).forEach(function(k) {
+        if (layers[k].setParams && k !== 'world_map' && k !== 'panchayat_basemap') {
+            layers[k].setParams({ CQL_FILTER: null });
         }
     });
 
-    // ── Step 3: Apply filter and ensure the layer is visible ─────────────────
-    if (layers[targetLayerKey]) {
-        layers[targetLayerKey].setParams({ CQL_FILTER: finalCQL || null });
-        if (!map.hasLayer(layers[targetLayerKey])) {
-            map.addLayer(layers[targetLayerKey]);
-            const checkbox = document.getElementById(`check-${targetLayerKey}`);
-            if (checkbox) checkbox.checked = true;
+    // Step 3: Apply filter + show layer
+    if (layers[layerKey]) {
+        if (cql) layers[layerKey].setParams({ CQL_FILTER: cql });
+        if (!map.hasLayer(layers[layerKey])) {
+            map.addLayer(layers[layerKey]);
+            var cb = document.getElementById("check-" + layerKey);
+            if (cb) cb.checked = true;
         }
+        layers[layerKey].bringToFront();
+        showToast("Showing: " + (LAYER_NAMES[layerKey] || layerKey) + (cql ? ' (filtered)' : ''), "success");
     }
 
-    // ── Step 4: WFS deep search — zoom + highlight a specific feature ─────────
-    // Derive the GeoServer layer name from the key (e.g. fire_stations → Fire Stations)
-    const geoServerName = targetLayerKey
-        .split('_')
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-
-    const wfsUrl =
-        `http://localhost:8080/geoserver/gramagis/ows` +
-        `?service=WFS&version=1.0.0&request=GetFeature` +
-        `&typeName=gramagis:${encodeURIComponent(geoServerName)}` +
-        `&outputFormat=application/json` +
-        `&CQL_FILTER=name ILIKE '%25${encodeURIComponent(input)}%25'` +
-        ` OR ward_name ILIKE '%25${encodeURIComponent(input)}%25'`;
+    // Step 4: WFS zoom + info panel via backend proxy
+    var geoName = LAYER_NAMES[layerKey] || layerKey;
+    var wfsParams = "?layer=" + encodeURIComponent(geoName);
+    if (cql) wfsParams += "&cql=" + encodeURIComponent(cql);
 
     try {
-        const response = await fetch(wfsUrl);
-        const data = await response.json();
+        const res  = await fetch(API_BASE + "/api/proxy/wfs" + wfsParams);
+        const data = await res.json();
 
         if (data.features && data.features.length > 0) {
             const feature = data.features[0];
             const geom    = feature.geometry;
 
-            // Zoom
-            if (geom.type === "Point") {
-                map.setView([geom.coordinates[1], geom.coordinates[0]], 17);
-            } else {
-                map.fitBounds(L.geoJSON(feature).getBounds());
+            if (geom) {
+                if (geom.type === "Point") {
+                    map.setView([geom.coordinates[1], geom.coordinates[0]], 17);
+                } else {
+                    map.fitBounds(L.geoJSON(feature).getBounds(), { padding: [40,40] });
+                }
             }
 
-            // Info panel
-            displayInfoOnRight(feature.properties);
+            showInfoPanel(feature.properties, layerKey);
 
-            // Highlight ring — auto-removed after 3 s
-            const highlight = L.geoJSON(feature, { color: 'yellow', weight: 5 }).addTo(map);
-            setTimeout(() => map.removeLayer(highlight), 3000);
-
-        } else if (!finalCQL) {
-            // Only show "no results" when it was a specific name search, not a broad category show
-            showNoResultsFeedback(inputField, originalPlaceholder);
+            const highlight = L.geoJSON(feature, {
+                style: { color:'#facc15', weight:5, fillOpacity:0.25 }
+            }).addTo(map);
+            setTimeout(function() { map.removeLayer(highlight); }, 4000);
         }
     } catch (err) {
-        console.error("WFS Search Error:", err);
+        console.error("WFS proxy error:", err);
     }
 };
-
-// ─── Info panel ───────────────────────────────────────────────────────────────
-function displayInfoOnRight(props) {
-    const panel   = document.getElementById('info-panel');
-    const title   = document.getElementById('info-title');
-    const content = document.getElementById('info-content');
-
-    panel.style.display = 'block';
-    title.innerText = props.name || props.Name || "Details";
-
-    const skipKeys = new Set(['geom', 'id', 'gid', 'objectid']);
-    let html = "<ul>";
-    for (const key in props) {
-        if (skipKeys.has(key.toLowerCase())) continue;
-        const val        = props[key];
-        const displayVal = (val === null || val === undefined || val === "")
-            ? "<i style='color:#999'>Attribute not found</i>"
-            : val;
-        const cleanKey   = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        html += `<li><b>${cleanKey}:</b> ${displayVal}</li>`;
-    }
-    html += "</ul>";
-    content.innerHTML = html;
-}
-
-// ─── UX helpers ───────────────────────────────────────────────────────────────
-function showNoResultsFeedback(inputField, originalText) {
-    inputField.value       = "";
-    inputField.placeholder = "No results found!";
-    setTimeout(() => { inputField.placeholder = originalText; }, 3000);
-}
-
-function closeInfoPanel() {
-    document.getElementById('info-panel').style.display = 'none';
-}
