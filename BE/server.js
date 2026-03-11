@@ -1,19 +1,33 @@
 // server.js - GramaGIS Backend Server
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+import authRouter from './routes/auth.js';
+import feedbackRouter from './routes/feedback.js';
+import queryRouter from './routes/query.js';
+import proxyRouter from './routes/proxy.js';
 
 // ES6 module fix for __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 5500;
+const PORT = process.env.PORT || 3000;
+
+const requiredEnv = ['JWT_SECRET'];
+const missingEnv = requiredEnv.filter((k) => !process.env[k]);
+if (missingEnv.length) {
+    console.error(`Missing required environment variables: ${missingEnv.join(', ')}`);
+    process.exit(1);
+}
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.text({ type: ['text/xml', 'application/xml', 'application/gml+xml'] }));
 
 // Serve static files from FE directory
 app.use('/FE', express.static(path.join(__dirname, '../FE')));
@@ -28,24 +42,11 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'GramaGIS Backend is running' });
 });
 
-// Example API route for NLP query (placeholder)
-app.post('/api/nlquery', async (req, res) => {
-    try {
-        const { query, schema } = req.body;
-        
-        // TODO: Implement Gemini API integration here
-        // For now, return a dummy response
-        res.json({
-            text: JSON.stringify({
-                layer: "hospitals",
-                cql: "ward_no = 3"
-            })
-        });
-    } catch (error) {
-        console.error('NLP Query Error:', error);
-        res.status(500).json({ error: 'Query processing failed' });
-    }
-});
+// API routes
+app.use('/api/auth', authRouter);
+app.use('/api/feedback', feedbackRouter);
+app.use('/api/nlquery', queryRouter);
+app.use('/api/proxy', proxyRouter);
 
 // Start server
 app.listen(PORT, () => {
@@ -68,3 +69,5 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (error) => {
     console.error('Unhandled Rejection:', error);
 });
+
+

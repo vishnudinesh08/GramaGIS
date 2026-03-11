@@ -12,3 +12,17 @@ Thumbs.db
 *.zip
 *.shp
 *.dbf
+
+# Node / npm
+node_modules/
+BE/node_modules/
+npm-debug.log*
+
+# Environment files (never commit secrets)
+.env
+.env.*
+BE/.env
+FE/.env
+
+# Cursor/IDE misc
+.cursor/

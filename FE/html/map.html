@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <!-- App Styles - Using absolute path from server root -->
-    <link rel="stylesheet" href="/FE/css/map.css" />
+    <link rel="stylesheet" href="/FE/css/map.css?v=20260311c" />
 </head>
 <body>
 
@@ -43,10 +43,6 @@
                         <input type="checkbox" id="check-ward_boundary" onchange="toggleLayer('ward_boundary', this)">
                         <label for="check-ward_boundary">Ward Boundary</label>
                     </div>
-                    <div class="layer-item">
-                        <input type="checkbox" id="check-boundaries" onchange="toggleLayer('boundaries', this)">
-                        <label for="check-boundaries">Vazhathope</label>
-                    </div>
                 </div>
             </details>
 
@@ -69,7 +65,7 @@
 
             <details>
                 <summary>
-                    <span class="summary-icon">&#127958;</span> Tourism &amp; Amenities
+                    <span class="summary-icon">&#127958;</span> Civic Amenities
                     <span class="summary-arrow">&#9654;</span>
                 </summary>
                 <div class="layer-list">
@@ -78,6 +74,23 @@
                         <label for="check-toilets">Public Toilets</label>
                     </div>
                     <div class="layer-item">
+                        <input type="checkbox" id="check-community_halls" onchange="toggleLayer('community_halls', this)">
+                        <label for="check-community_halls">Community Halls</label>
+                    </div>
+                    <div class="layer-item">
+                        <input type="checkbox" id="check-feedback" onchange="toggleLayer('feedback', this)">
+                        <label for="check-feedback">Feedback Reports</label>
+                    </div>
+                </div>
+            </details>
+
+            <details>
+                <summary>
+                    <span class="summary-icon">&#127869;</span> Commerce &amp; Hospitality
+                    <span class="summary-arrow">&#9654;</span>
+                </summary>
+                <div class="layer-list">
+                    <div class="layer-item">
                         <input type="checkbox" id="check-hotels" onchange="toggleLayer('hotels', this)">
                         <label for="check-hotels">Hotels</label>
                     </div>
@@ -85,12 +98,20 @@
                         <input type="checkbox" id="check-restaurants" onchange="toggleLayer('restaurants', this)">
                         <label for="check-restaurants">Restaurants</label>
                     </div>
+                    <div class="layer-item">
+                        <input type="checkbox" id="check-banks" onchange="toggleLayer('banks', this)">
+                        <label for="check-banks">Banks</label>
+                    </div>
+                    <div class="layer-item">
+                        <input type="checkbox" id="check-atm" onchange="toggleLayer('atm', this)">
+                        <label for="check-atm">ATM</label>
+                    </div>
                 </div>
             </details>
 
             <details>
                 <summary>
-                    <span class="summary-icon">&#128739;</span> Infrastructure
+                    <span class="summary-icon">&#128739;</span> Mobility &amp; Infrastructure
                     <span class="summary-arrow">&#9654;</span>
                 </summary>
                 <div class="layer-list">
@@ -107,7 +128,7 @@
 
             <details>
                 <summary>
-                    <span class="summary-icon">&#127963;</span> Public Services
+                    <span class="summary-icon">&#128657;</span> Health &amp; Safety
                     <span class="summary-arrow">&#9654;</span>
                 </summary>
                 <div class="layer-list">
@@ -120,13 +141,18 @@
                         <label for="check-police_stations">Police Stations</label>
                     </div>
                     <div class="layer-item">
-                        <input type="checkbox" id="check-banks" onchange="toggleLayer('banks', this)">
-                        <label for="check-banks">Banks</label>
-                    </div>
-                    <div class="layer-item">
                         <input type="checkbox" id="check-fire_stations" onchange="toggleLayer('fire_stations', this)">
                         <label for="check-fire_stations">Fire Stations</label>
                     </div>
+                </div>
+            </details>
+
+            <details>
+                <summary>
+                    <span class="summary-icon">&#127963;</span> Governance &amp; Public Offices
+                    <span class="summary-arrow">&#9654;</span>
+                </summary>
+                <div class="layer-list">
                     <div class="layer-item">
                         <input type="checkbox" id="check-government_offices" onchange="toggleLayer('government_offices', this)">
                         <label for="check-government_offices">Government Offices</label>
@@ -137,6 +163,17 @@
                     </div>
                 </div>
             </details>
+        </div>
+
+        <div class="sidebar-actions">
+            <a href="feedback.html" class="feedback-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Feedback
+            </a>
+            <a href="login.html" class="feedback-btn" style="background:linear-gradient(135deg, rgba(26,115,232,0.22), rgba(26,115,232,0.1)); border-color:rgba(96,165,250,0.4); margin-top:10px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                Admin Login
+            </a>
         </div>
 
         <div class="sidebar-footer">
@@ -152,22 +189,35 @@
                 <input
                     type="text"
                     id="userInput"
-                    placeholder="e.g. show hospitals in ward 3, damaged roads..."
+                    placeholder="e.g. hospitals and banks in ward 5, schools with ownership government..."
                     onkeydown="if(event.key==='Enter') triggerSearch()"
                 >
                 <button id="search-btn" onclick="triggerSearch()">&#128269;</button>
+            </div>
+            <div class="search-hints" aria-label="Suggested searches">
+                <button type="button" class="search-hint-chip" onclick="document.getElementById('userInput').value='schools in ward 7'; triggerSearch();">Schools in Ward 7</button>
+                <button type="button" class="search-hint-chip" onclick="document.getElementById('userInput').value='hospitals and banks in ward 5'; triggerSearch();">Hospitals and Banks</button>
+                <button type="button" class="search-hint-chip" onclick="document.getElementById('userInput').value='roads with surface concrete in ward 3'; triggerSearch();">Road Surface Query</button>
             </div>
         </div>
 
         <!-- ============ MAP ============ -->
         <div id="map"></div>
+        <div id="center-focus" aria-hidden="true">
+            <div class="focus-ring ring-outer"></div>
+            <div class="focus-ring ring-inner"></div>
+            <div class="focus-dot"></div>
+        </div>
 
         <!-- ============ INFO PANEL ============ -->
         <div id="info-panel">
             <div class="panel-header">
                 <h3 id="info-title">Feature Details</h3>
                 <span id="info-subtitle">Vazhathope Panchayat</span>
-                <button class="close-btn" onclick="closeInfoPanel()">&#10005;</button>
+                <div class="panel-actions">
+                    <button class="panel-toggle-btn" id="panel-toggle-btn" onclick="toggleInfoPanelCollapse()" title="Minimize panel">&#8722;</button>
+                    <button class="close-btn" onclick="closeInfoPanel()" title="Close panel">&#10005;</button>
+                </div>
             </div>
             <div class="panel-divider"></div>
             <div id="info-content">
@@ -181,8 +231,10 @@
 
     <!-- ============ SCRIPTS - Using absolute paths from server root ============ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/FE/js/query.js"></script>
-    <script src="/FE/js/map.js"></script>
+    <script src="/FE/js/config.js?v=20260309b"></script>
+    <script src="/FE/js/query.js?v=20260311b"></script>
+    <script src="/FE/js/map.js?v=20260311c"></script>
 
 </body>
 </html>
+

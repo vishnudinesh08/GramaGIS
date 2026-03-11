@@ -3,11 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GramaGIS – Submit Feedback</title>
+    <title>GramaGIS - Feedback</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/feedback.css">
+    <link rel="stylesheet" href="../css/feedback.css?v=20260311c">
 </head>
 <body>
+<div class="feedback-ambient-shell" aria-hidden="true">
+    <div class="feedback-orbit orbit-left"></div>
+    <div class="feedback-orbit orbit-right"></div>
+    <div class="feedback-scan"></div>
+</div>
 
 <div class="topbar">
     <div class="topbar-logo">GramaGIS</div>
@@ -18,18 +23,63 @@
 </div>
 
 <div class="page-wrap">
-
     <div class="page-header">
         <div class="tag">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             Citizen Feedback
         </div>
-        <h1>Report an Issue</h1>
-        <p>Help keep Vazhathope Panchayat's data accurate. Report missing infrastructure, incorrect information, or maintenance issues and an administrator will review your submission.</p>
+        <h1>Feedback</h1>
+        <p>View community reports or submit a new one. Users enter longitude and latitude separately, and the system creates the map point automatically.</p>
     </div>
 
-    <!-- Form card -->
-    <div class="card" id="feedback-form-card">
+    <div class="feedback-hero-grid">
+        <div class="hero-mini-card">
+            <div class="hero-mini-label">Public Log</div>
+            <strong>Transparent tracking</strong>
+            <p>Citizens can view active, in-progress, and resolved feedback in one place.</p>
+        </div>
+        <div class="hero-mini-card">
+            <div class="hero-mini-label">Map Ready</div>
+            <strong>Location-aware reports</strong>
+            <p>Longitude and latitude become a spatial point automatically for mapping.</p>
+        </div>
+        <div class="hero-mini-card">
+            <div class="hero-mini-label">Useful Details</div>
+            <strong>Better categorization</strong>
+            <p>Category, ward, priority, and location hints make review faster for admins.</p>
+        </div>
+    </div>
+
+    <div class="card feedback-tab-card">
+        <div class="feedback-tab-switcher">
+            <button class="btn-submit" id="view-tab-btn" type="button" onclick="switchFeedbackTab('view')">View Feedback</button>
+            <button class="btn-back" id="submit-tab-btn" type="button" onclick="switchFeedbackTab('submit')">Submit Feedback</button>
+        </div>
+        <p class="tab-helper-text">Browse existing reports first, or add a new one with as much location detail as you have.</p>
+    </div>
+
+    <div class="card" id="feedback-view-card" style="display:block;">
+        <div class="card-section-title">Community Reports</div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; align-items:center;">
+            <select id="public-feedback-status" onchange="loadPublicFeedback()" style="min-width:180px;">
+                <option value="all">All statuses</option>
+                <option value="not_resolved">Not Resolved</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+            </select>
+            <select id="public-feedback-ward" onchange="loadPublicFeedback()" style="min-width:180px;">
+                <option value="">All wards</option>
+                <option value="Ward 1">Ward 1</option><option value="Ward 2">Ward 2</option><option value="Ward 3">Ward 3</option>
+                <option value="Ward 4">Ward 4</option><option value="Ward 5">Ward 5</option><option value="Ward 6">Ward 6</option>
+                <option value="Ward 7">Ward 7</option><option value="Ward 8">Ward 8</option><option value="Ward 9">Ward 9</option>
+                <option value="Ward 10">Ward 10</option><option value="Ward 11">Ward 11</option><option value="Ward 12">Ward 12</option>
+                <option value="Ward 13">Ward 13</option><option value="Ward 14">Ward 14</option><option value="Ward 15">Ward 15</option>
+            </select>
+        </div>
+        <div id="public-feedback-list"></div>
+    </div>
+
+    <div class="card" id="feedback-form-card" style="display:none;">
         <div class="card-section-title">Your Information (Optional)</div>
 
         <div class="form-row">
@@ -54,12 +104,21 @@
         <div class="form-group">
             <label>Category <span class="req">*</span></label>
             <div class="chip-group" id="category-group">
-                <div class="chip" data-val="road" onclick="selectChip(this, 'category-group')">🛣️ Road Damage</div>
-                <div class="chip" data-val="water" onclick="selectChip(this, 'category-group')">💧 Water Supply</div>
-                <div class="chip" data-val="building" onclick="selectChip(this, 'category-group')">🏛️ Building</div>
-                <div class="chip" data-val="map_error" onclick="selectChip(this, 'category-group')">🗺️ Map Error</div>
-                <div class="chip" data-val="missing" onclick="selectChip(this, 'category-group')">❓ Missing Asset</div>
-                <div class="chip" data-val="other" onclick="selectChip(this, 'category-group')">📋 Other</div>
+                <div class="chip" data-val="road" onclick="selectChip(this, 'category-group')">Road Damage</div>
+                <div class="chip" data-val="water" onclick="selectChip(this, 'category-group')">Water Supply</div>
+                <div class="chip" data-val="drainage" onclick="selectChip(this, 'category-group')">Drainage</div>
+                <div class="chip" data-val="waste" onclick="selectChip(this, 'category-group')">Waste</div>
+                <div class="chip" data-val="streetlight" onclick="selectChip(this, 'category-group')">Streetlight</div>
+                <div class="chip" data-val="electricity" onclick="selectChip(this, 'category-group')">Electricity</div>
+                <div class="chip" data-val="health" onclick="selectChip(this, 'category-group')">Health</div>
+                <div class="chip" data-val="education" onclick="selectChip(this, 'category-group')">Education</div>
+                <div class="chip" data-val="transport" onclick="selectChip(this, 'category-group')">Transport</div>
+                <div class="chip" data-val="building" onclick="selectChip(this, 'category-group')">Building</div>
+                <div class="chip" data-val="map_error" onclick="selectChip(this, 'category-group')">Map Error</div>
+                <div class="chip" data-val="missing_asset" onclick="selectChip(this, 'category-group')">Missing Asset</div>
+                <div class="chip" data-val="safety" onclick="selectChip(this, 'category-group')">Safety</div>
+                <div class="chip" data-val="environment" onclick="selectChip(this, 'category-group')">Environment</div>
+                <div class="chip" data-val="other" onclick="selectChip(this, 'category-group')">Other</div>
             </div>
         </div>
 
@@ -69,7 +128,7 @@
                 <div class="input-wrap">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
                     <select id="ward-select">
-                        <option value="">Select ward…</option>
+                        <option value="">Select ward...</option>
                         <option>Ward 1</option><option>Ward 2</option><option>Ward 3</option>
                         <option>Ward 4</option><option>Ward 5</option><option>Ward 6</option>
                         <option>Ward 7</option><option>Ward 8</option><option>Ward 9</option>
@@ -88,7 +147,30 @@
             </div>
         </div>
 
-        <div class="form-group">
+        <div class="location-helper-card">
+            <div>
+                <strong>Location tip</strong>
+                <p>If you know the coordinates, enter longitude and latitude separately. The map point is generated automatically, so there is no need to type geometry.</p>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="feedback-longitude">Longitude</label>
+                <div class="input-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M5 9l7-7 7 7"/><path d="M5 15l7 7 7-7"/></svg>
+                    <input type="text" id="feedback-longitude" placeholder="e.g. 76.96219163">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="feedback-latitude">Latitude</label>
+                <div class="input-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M9 5l-7 7 7 7"/><path d="M15 5l7 7-7 7"/></svg>
+                    <input type="text" id="feedback-latitude" placeholder="e.g. 9.85267915">
+                </div>
+            </div>
+        </div>
+<div class="form-group">
             <label for="issue-title">Issue Title <span class="req">*</span></label>
             <div class="input-wrap">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="15" y2="18"/></svg>
@@ -105,9 +187,9 @@
         <div class="form-group">
             <label>Priority Level</label>
             <div class="priority-group" id="priority-group">
-                <button class="priority-btn" data-val="low" onclick="selectPriority(this)">🟢 Low</button>
-                <button class="priority-btn" data-val="medium" onclick="selectPriority(this)">🟡 Medium</button>
-                <button class="priority-btn" data-val="high" onclick="selectPriority(this)">🔴 High / Urgent</button>
+                <button class="priority-btn" type="button" data-val="low" onclick="selectPriority(this)">Low</button>
+                <button class="priority-btn" type="button" data-val="medium" onclick="selectPriority(this)">Medium</button>
+                <button class="priority-btn" type="button" data-val="high" onclick="selectPriority(this)">High / Urgent</button>
             </div>
         </div>
 
@@ -116,33 +198,48 @@
         <div class="submit-row">
             <div class="submit-note">
                 Your feedback is reviewed by Panchayat administrators.<br>
-                Anonymous submissions are accepted.
+                Longitude and latitude will be converted into a map point when provided.
             </div>
             <button class="btn-submit" id="submit-btn" onclick="submitFeedback()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                Submit Report
+                Submit Feedback
             </button>
         </div>
     </div>
 
-    <!-- Success state -->
     <div class="card success-card" id="success-card">
         <div class="success-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-        <h2>Report Submitted!</h2>
-        <p>Thank you for helping improve GramaGIS. A Panchayat administrator will review your report and update the database accordingly.</p>
-        <a href="index.html" class="btn-back">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-            Back to Home
-        </a>
+        <h2>Feedback Submitted</h2>
+        <p>Thank you for helping improve GramaGIS. The report will stay visible until it is resolved.</p>
+        <button class="btn-back" type="button" onclick="switchFeedbackTab('view')" style="display:inline-flex; align-items:center; justify-content:center;">View Feedback</button>
     </div>
-
 </div>
 
+<script src="/FE/js/config.js?v=20260309b"></script>
 <script>
+    const API_BASE = window.GRAMA_API_BASE || (window.location.port === '3000' ? '' : 'http://localhost:3000');
+    const STATUS_LABELS = { not_resolved: 'Not Resolved', in_progress: 'In Progress', resolved: 'Resolved' };
     let selectedCategory = null;
     let selectedPriority = null;
+
+    function switchFeedbackTab(tab) {
+        const viewCard = document.getElementById('feedback-view-card');
+        const formCard = document.getElementById('feedback-form-card');
+        const successCard = document.getElementById('success-card');
+        const viewBtn = document.getElementById('view-tab-btn');
+        const submitBtn = document.getElementById('submit-tab-btn');
+
+        viewCard.style.display = tab === 'view' ? 'block' : 'none';
+        formCard.style.display = tab === 'submit' ? 'block' : 'none';
+        if (tab !== 'submit') successCard.style.display = 'none';
+
+        viewBtn.className = tab === 'view' ? 'btn-submit' : 'btn-back';
+        submitBtn.className = tab === 'submit' ? 'btn-submit' : 'btn-back';
+
+        if (tab === 'view') loadPublicFeedback();
+    }
 
     function selectChip(el, groupId) {
         document.querySelectorAll(`#${groupId} .chip`).forEach(c => c.classList.remove('active'));
@@ -163,54 +260,120 @@
         const len = document.getElementById('issue-desc').value.length;
         document.getElementById('char-count').textContent = len;
     }
+function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function normalizeFeedbackDescription(text) {
+        return String(text || '')
+            .replace(/^Reported category:[^\n]*\n\n?/i, '')
+            .replace(/^Location\/Landmark:[^\n]*\n\n?/i, '');
+    }
+
+    async function loadPublicFeedback() {
+        const list = document.getElementById('public-feedback-list');
+        const status = document.getElementById('public-feedback-status').value;
+        const ward = document.getElementById('public-feedback-ward').value;
+        let url = API_BASE + '/api/feedback/public';
+        const params = [];
+        if (status && status !== 'all') params.push('status=' + encodeURIComponent(status));
+        if (ward) params.push('ward=' + encodeURIComponent(ward));
+        if (params.length) url += '?' + params.join('&');
+
+        list.innerHTML = '<p style="font-size:0.85rem; color:var(--muted);">Loading feedback...</p>';
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Could not load feedback.');
+
+            const items = data.items || [];
+            if (!items.length) {
+                list.innerHTML = '<p style="font-size:0.85rem; color:var(--muted);">No feedback reports found.</p>';
+                return;
+            }
+
+            list.innerHTML = items.map(item => {
+                const statusKey = String(item.status || 'not_resolved').toLowerCase();
+                const resolved = statusKey === 'resolved';
+                return `
+                <div style="background:var(--surface); border:1px solid var(--border); border-left:3px solid ${resolved ? '#5f6b78' : '#f39c12'}; border-radius:12px; padding:20px; margin-bottom:14px; ${resolved ? 'opacity:0.5; filter:saturate(0.65);' : ''}">
+                    <div style="display:flex; justify-content:space-between; gap:16px; margin-bottom:10px; align-items:flex-start;">
+                        <div>
+                            <div style="font-weight:600; font-size:0.95rem;">${escapeHtml(item.title)}</div>
+                            <div style="font-size:0.78rem; color:var(--muted); margin-top:3px;">Ward ${escapeHtml(item.ward)} � ${escapeHtml(String(item.category).replace('_', ' '))} � ${new Date(item.created_at || Date.now()).toLocaleDateString()}</div>
+                        </div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                            <span style="border:1px solid var(--border); border-radius:6px; padding:3px 10px; font-size:0.75rem;">${escapeHtml(String(item.priority || 'low').toUpperCase())}</span>
+                            <span style="border:1px solid var(--border); border-radius:6px; padding:3px 10px; font-size:0.75rem;">${escapeHtml(STATUS_LABELS[statusKey] || statusKey)}</span>
+                        </div>
+                    </div>
+                    <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">${escapeHtml(normalizeFeedbackDescription(item.description))}</p>
+                </div>`;
+            }).join('');
+        } catch (err) {
+            list.innerHTML = '<p style="font-size:0.85rem; color:var(--muted);">Could not load feedback.</p>';
+        }
+    }
 
     function submitFeedback() {
-        const ward  = document.getElementById('ward-select').value;
+        const ward = document.getElementById('ward-select').value;
         const title = document.getElementById('issue-title').value.trim();
-        const desc  = document.getElementById('issue-desc').value.trim();
+        const desc = document.getElementById('issue-desc').value.trim();
+        const longitude = document.getElementById('feedback-longitude').value.trim();
+        const latitude = document.getElementById('feedback-latitude').value.trim();
 
         if (!selectedCategory) { alert('Please select a category.'); return; }
-        if (!ward)              { alert('Please select a ward.'); return; }
-        if (!title)             { alert('Please enter an issue title.'); return; }
-        if (!desc)              { alert('Please enter a description.'); return; }
+        if (!ward) { alert('Please select a ward.'); return; }
+        if (!title) { alert('Please enter an issue title.'); return; }
+        if (!desc) { alert('Please enter a description.'); return; }
+        if ((longitude && !latitude) || (!longitude && latitude)) { alert('Provide both longitude and latitude together.'); return; }
 
         const btn = document.getElementById('submit-btn');
         btn.disabled = true;
-        btn.textContent = 'Submitting…';
+        btn.textContent = 'Submitting...';
 
         const payload = {
-            reporter_name:    document.getElementById('reporter-name').value.trim() || 'Anonymous',
+            reporter_name: document.getElementById('reporter-name').value.trim() || 'Anonymous',
             reporter_contact: document.getElementById('reporter-phone').value.trim(),
-            category:         selectedCategory,
+            category: selectedCategory,
             ward,
-            location_hint:    document.getElementById('location-hint').value.trim(),
+            location_hint: document.getElementById('location-hint').value.trim(),
             title,
-            description:      desc,
-            priority:         selectedPriority || 'low'
+            description: desc,
+            priority: selectedPriority || 'low',
+            longitude: longitude || null,
+            latitude: latitude || null
         };
 
-        fetch('http://localhost:3000/api/feedback', {
+        fetch(API_BASE + '/api/feedback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('feedback-form-card').style.display = 'none';
-                const success = document.getElementById('success-card');
-                success.classList.add('show');
-                success.style.display = 'block';
-            } else {
-                throw new Error(data.error || 'Submission failed.');
-            }
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+            if (!ok || !data.success) throw new Error(data.error || 'Submission failed.');
+            document.getElementById('feedback-form-card').style.display = 'none';
+            const success = document.getElementById('success-card');
+            success.classList.add('show');
+            success.style.display = 'block';
+            loadPublicFeedback();
         })
         .catch(err => {
             btn.disabled = false;
-            btn.textContent = 'Submit Report';
-            alert('Error: ' + err.message + '\n\nIs the backend running on port 3000?');
+            btn.textContent = 'Submit Feedback';
+            alert('Error: ' + err.message + '\n\nIs the GramaGIS backend server running?');
         });
     }
+
+    loadPublicFeedback();
 </script>
 </body>
 </html>
+
+
