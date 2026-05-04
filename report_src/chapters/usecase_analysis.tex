@@ -1,0 +1,139 @@
+﻿\newpage
+\thispagestyle{empty}
+%
+\begin{spacing}{1.3}
+%
+\chapter{Use Case Analysis}
+
+This chapter describes the primary use cases of the GramaGIS system. Each use case represents a distinct interaction between the actors and the platform, outlining the functional behavior, the technical workflow involving the frontend, Express.js backend, GeoServer services, and the expected outcomes for village administration \cite{fu2020webgis}.
+
+\section{View Interactive Village Map}
+
+\textbf{Actors:} Public Viewers, Administrative Users
+
+\textbf{Description:}
+This use case allows any user to access the GramaGIS web portal to explore the spatial distribution of village assets and ward boundaries.
+
+\textbf{Workflow:}
+\begin{itemize}
+    \item User navigates to the GramaGIS URL in a web browser.
+    \item The frontend loads the map interface and requests the base map and published GIS layers.
+    \item GeoServer provides the required WMS layers to the Leaflet frontend \cite{fu2020webgis}.
+    \item The interactive map is rendered, allowing the user to pan and zoom across the Panchayat.
+\end{itemize}
+
+\textbf{Outcome:}
+Users gain immediate spatial awareness of the village layout and can identify the locations of public utilities and administrative boundaries.
+
+\section{Natural Language Infrastructure Query}
+
+\textbf{Actors:} Public Viewers, Administrative Users
+
+\textbf{Description:}
+Users interact with the geospatial database using plain English queries to find specific infrastructure instead of using manual filters \cite{liu2025nalspatial}.
+
+\textbf{Workflow:}
+\begin{itemize}
+    \item User enters a query (e.g., ``Where are the clinics in Ward 3?'') into the search interface.
+    \item The Express.js backend forwards the text along with the schema hint to the Gemini API.
+    \item Gemini returns a JSON object containing the target layer and a valid CQL filter \cite{liu2025nalspatial}.
+    \item The frontend applies the CQL filter to the relevant map layer and requests filtered features through the WFS proxy.
+    \item The map and result panel update to highlight only the relevant features.
+\end{itemize}
+
+\textbf{Outcome:}
+Non-technical users can perform spatial searches without knowledge of SQL or GIS query syntax.
+
+\section{Metadata Retrieval}
+
+\textbf{Actors:} Public Viewers, Administrative Users
+
+\textbf{Description:}
+Retrieval of detailed non-spatial information associated with a specific map feature, such as a school or hospital.
+
+\textbf{Workflow:}
+\begin{itemize}
+    \item User clicks on a specific feature on the interactive map.
+    \item Leaflet issues a \texttt{GetFeatureInfo} request to the active GeoServer layer.
+    \item GeoServer returns the matching feature attributes from the published spatial data \cite{postgis_in_action}.
+    \item A formatted details panel is displayed on the frontend containing the feature metadata.
+\end{itemize}
+
+\textbf{Outcome:}
+Users access descriptive data linked directly to the geographic location of the asset.
+
+\section{Spatial Data Export}
+
+\textbf{Actors:} Administrative Users
+
+\textbf{Description:}
+Exporting filtered layer data for offline use, official reports, or secondary analysis \cite{fu2020webgis}.
+
+\textbf{Workflow:}
+\begin{itemize}
+    \item User applies filters to the map or selects a target layer in the admin module.
+    \item User selects the ``Export'' function and chooses a format exposed by the interface, such as GeoJSON or CSV.
+    \item The Express.js proxy forwards the export request to GeoServer.
+    \item GeoServer generates the filtered export from the underlying spatial data and returns it through the backend.
+\end{itemize}
+
+\textbf{Outcome:}
+Administrators can produce standardized data files for documentation and sharing with other departments.
+
+\section{Administrative Data Update (T-GIS)}
+
+\textbf{Actors:} Administrative Users
+
+\textbf{Description:}
+Authorized Panchayat officials update or add infrastructure data to the living database to reflect real-world changes \cite{smart_panchayat2023}.
+
+\textbf{Workflow:}
+\begin{itemize}
+    \item Administrator logs in and receives a JSON Web Token (JWT).
+    \item The user selects an existing feature to edit or uses the custom geometry editor to prepare an updated geometry.
+    \item The frontend sends the updated attributes, geometry in WKT form, and the JWT to the Express.js secure proxy route.
+    \item Express.js validates the token and translates the payload into a WFS-T (Web Feature Service-Transactional) request \cite{fu2020webgis}.
+    \item GeoServer commits the change to the PostGIS database \cite{postgis_in_action}.
+\end{itemize}
+
+\textbf{Outcome:}
+The village database remains accurate and up to date, providing a reliable source of truth for administrative planning.
+
+\section{Infrastructure Resource Review}
+
+\textbf{Actors:} Administrative Users
+
+\textbf{Description:}
+Administrators review filtered records and live layer data to inspect the distribution of mapped infrastructure and verify whether datasets are up to date.
+
+\textbf{Workflow:}
+\begin{itemize}
+    \item Administrator opens the management interface and selects a layer such as schools, hospitals, roads, or government offices.
+    \item The interface loads the schema and current feature set through the backend and GeoServer services.
+    \item The administrator filters or searches records to inspect coverage, attributes, and current layer contents.
+    \item The system presents the matching records in the table and the associated features on the map.
+\end{itemize}
+
+\textbf{Outcome:}
+Panchayat officials gain a practical operational view of currently published infrastructure records and can identify missing or outdated data for correction.
+
+\section{Feedback and Infrastructure Issue Reporting}
+
+\textbf{Actors:} Public Viewers, Administrative Users
+
+\textbf{Description:}
+This use case allows users to report inaccuracies in map data, missing infrastructure elements, or service-related issues directly to the Panchayat office.
+
+\textbf{Workflow:}
+\begin{itemize}
+    \item User opens the general ``Feedback'' interface.
+    \item The user enters the issue details, category, ward, and optional coordinates or landmark information.
+    \item The frontend sends a POST request with the feedback payload to the Express.js API.
+    \item The backend validates the input and stores the report in the \texttt{feedback} table through direct SQL operations.
+    \item An administrative user reviews the report, updates its workflow status, and uses the T-GIS module if a spatial data correction is required \cite{smart_panchayat2023}.
+\end{itemize}
+
+\textbf{Outcome:}
+GramaGIS maintains a higher level of data accuracy and operational transparency through citizen reporting and continuous administrative oversight.
+
+\end{spacing}

@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import fetch from 'node-fetch';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireSuperAdmin } from '../middleware/auth.js';
 
 const router = Router();
 
 const GEO_BASE = process.env.GEOSERVER_URL || 'http://localhost:8080/geoserver';
-const GEO_USER = process.env.GEOSERVER_USER || 'admin';
-const GEO_PASS = process.env.GEOSERVER_PASS || 'geoserver';
+const GEO_USER = process.env.GEOSERVER_USER || '';
+const GEO_PASS = process.env.GEOSERVER_PASS || '';
+const ENABLE_RAW_WFST = String(process.env.ENABLE_RAW_WFST || '').toLowerCase() === 'true';
 const WORKSPACE = process.env.GEOSERVER_WORKSPACE || 'gramagis';
 
 const LAYER_NAME_MAP = {
@@ -14,6 +15,7 @@ const LAYER_NAME_MAP = {
     banks: 'Banks',
     colleges: 'Colleges',
     community_halls: 'Community halls',
+    feedback: 'feedback',
     fire_stations: 'Fire Stations',
     government_offices: 'Government Offices',
     hospitals: 'Hospitals',
@@ -24,19 +26,120 @@ const LAYER_NAME_MAP = {
     restaurants: 'Restaurants',
     roads: 'Roads',
     schools: 'Schools',
-    toilets: 'Toilets',
     ward_boundary: 'Ward Boundary',
     wards: 'Wards'
 };
+const ALLOWED_LAYER_NAMES = new Set(Object.values(LAYER_NAME_MAP));
 
 function geoAuth() {
+    if (!GEO_USER || !GEO_PASS) return undefined;
     return 'Basic ' + Buffer.from(GEO_USER + ':' + GEO_PASS).toString('base64');
+}
+
+function buildGeoHeaders(extra = {}) {
+    const auth = geoAuth();
+    return auth ? { ...extra, Authorization: auth } : extra;
 }
 
 function normalizeLayerName(input) {
     const raw = String(input || '').trim();
     if (!raw) return '';
-    return LAYER_NAME_MAP[raw] || raw;
+    const mapped = LAYER_NAME_MAP[raw];
+    if (mapped) return mapped;
+    const exact = Array.from(ALLOWED_LAYER_NAMES).find((name) => name.toLowerCase() === raw.toLowerCase());
+    return exact || '';
+}
+function normalizeWmsLayerToken(input) {
+    const raw = String(input || '').trim();
+    if (!raw) return '';
+    const withoutWorkspace = raw.includes(':') ? raw.split(':').slice(1).join(':') : raw;
+    const normalized = normalizeLayerName(withoutWorkspace);
+    if (!normalized) return '';
+    return `${WORKSPACE}:${normalized}`;
+}
+function normalizeWmsLayerList(input) {
+    const rawItems = String(input || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    if (!rawItems.length) return [];
+    const normalizedItems = rawItems.map(normalizeWmsLayerToken).filter(Boolean);
+    if (normalizedItems.length !== rawItems.length) return [];
+    return normalizedItems;
+}
+function getQueryParam(query, ...keys) {
+    for (const key of keys) {
+        if (query[key] != null && query[key] !== '') return query[key];
+        const match = Object.keys(query).find((candidate) => candidate.toLowerCase() === String(key).toLowerCase());
+        if (match && query[match] != null && query[match] !== '') return query[match];
+    }
+    return undefined;
+}
+function buildSafeWmsParams(query) {
+    const requestType = String(getQueryParam(query, 'request') || '').trim().toLowerCase();
+    if (!requestType || !['getmap', 'getfeatureinfo'].includes(requestType)) {
+        throw new Error('Unsupported WMS request.');
+    }
+    const layers = normalizeWmsLayerList(getQueryParam(query, 'layers'));
+    if (!layers.length) {
+        throw new Error('Invalid or unsupported WMS layer.');
+    }
+    const params = new URLSearchParams();
+    params.set('service', 'WMS');
+    params.set('request', requestType === 'getmap' ? 'GetMap' : 'GetFeatureInfo');
+    params.set('version', String(getQueryParam(query, 'version') || '1.1.1'));
+    params.set('layers', layers.join(','));
+    if (requestType === 'getmap') {
+        [
+            ['styles'],
+            ['format'],
+            ['transparent'],
+            ['height'],
+            ['width'],
+            ['srs', 'crs'],
+            ['bbox']
+        ].forEach((aliases) => {
+            const value = getQueryParam(query, ...aliases);
+            if (value != null && value !== '') params.set(aliases[0], String(value));
+        });
+        if (!params.get('format')) params.set('format', 'image/png');
+        return params;
+    }
+    const queryLayers = normalizeWmsLayerList(
+        getQueryParam(query, 'query_layers', 'queryLayers', 'layers')
+    );
+    if (!queryLayers.length) {
+        throw new Error('Invalid or unsupported WMS query layer.');
+    }
+    [
+        ['styles'],
+        ['format'],
+        ['transparent'],
+        ['height'],
+        ['width'],
+        ['srs', 'crs'],
+        ['bbox'],
+        ['info_format'],
+        ['x', 'i'],
+        ['y', 'j']
+    ].forEach((aliases) => {
+        const value = getQueryParam(query, ...aliases);
+        if (value != null && value !== '') params.set(aliases[0], String(value));
+    });
+    params.set('query_layers', queryLayers.join(','));
+    if (!params.get('format')) params.set('format', 'image/png');
+    if (!params.get('info_format')) params.set('info_format', 'application/json');
+    return params;
+}
+
+function clampMaxFeatures(input, defaultValue = 200, maxValue = 1000) {
+    const parsed = Number(input);
+    if (!Number.isFinite(parsed) || parsed <= 0) return String(defaultValue);
+    return String(Math.min(Math.floor(parsed), maxValue));
+}
+
+function isSafeXmlFieldName(value) {
+    return /^[A-Za-z_][A-Za-z0-9_]*$/.test(String(value || ''));
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
@@ -121,7 +224,7 @@ function buildPropertyXml(properties) {
             value !== undefined &&
             value !== null &&
             String(value).trim() !== '' &&
-            !key.includes(':')
+            isSafeXmlFieldName(key)
         )
         .map(([key, value]) => `<${WORKSPACE}:${key}>${escapeXml(coerceValue(value))}</${WORKSPACE}:${key}>`)
         .join('');
@@ -155,7 +258,8 @@ function buildUpdateXml(layerName, featureId, properties, geometryWkt) {
             key !== 'geom' &&
             value !== undefined &&
             value !== null &&
-            String(value).trim() !== ''
+            String(value).trim() !== '' &&
+            isSafeXmlFieldName(key)
         )
         .map(([key, value]) => `
     <wfs:Property>
@@ -204,7 +308,7 @@ async function forwardTransaction(xml) {
         method: 'POST',
         headers: {
             'Content-Type': 'text/xml',
-            Authorization: geoAuth()
+            ...buildGeoHeaders()
         },
         body: xml
     }, 15000);
@@ -275,12 +379,12 @@ router.get('/wfs', async (req, res) => {
 
         const extra = {
             outputFormat: 'application/json',
-            maxFeatures: String(req.query.maxFeatures || 200)
+            maxFeatures: clampMaxFeatures(req.query.maxFeatures)
         };
         if (cql) extra.CQL_FILTER = cql;
         const url = buildWfsUrl(layerName, extra);
 
-        const geoRes = await fetchWithTimeout(url, { headers: { Authorization: geoAuth() } }, 12000);
+        const geoRes = await fetchWithTimeout(url, { headers: buildGeoHeaders() }, 12000);
         if (!geoRes.ok) {
             const txt = await geoRes.text();
             return res.status(geoRes.status).json({ error: txt });
@@ -304,7 +408,7 @@ router.get('/wfs', async (req, res) => {
     }
 });
 
-router.get('/schema', async (req, res) => {
+router.get('/schema', requireAuth, requireEditor, async (req, res) => {
     try {
         const layerName = normalizeLayerName(req.query.layer);
         if (!layerName) return res.status(400).json({ error: 'layer param required' });
@@ -312,8 +416,8 @@ router.get('/schema', async (req, res) => {
         const schemaUrl = `${GEO_BASE}/${WORKSPACE}/ows?service=WFS&version=1.1.0&request=DescribeFeatureType&typeName=${encodeURIComponent(`${WORKSPACE}:${layerName}`)}`;
         const sampleUrl = buildWfsUrl(layerName, { outputFormat: 'application/json', maxFeatures: '25' });
         const [schemaRes, sampleRes] = await Promise.all([
-            fetchWithTimeout(schemaUrl, { headers: { Authorization: geoAuth() } }, 12000),
-            fetchWithTimeout(sampleUrl, { headers: { Authorization: geoAuth() } }, 12000)
+            fetchWithTimeout(schemaUrl, { headers: buildGeoHeaders() }, 12000),
+            fetchWithTimeout(sampleUrl, { headers: buildGeoHeaders() }, 12000)
         ]);
 
         const schemaText = await schemaRes.text();
@@ -355,7 +459,7 @@ router.get('/download', requireAuth, requireEditor, async (req, res) => {
         const extra = { outputFormat: selected.outputFormat, maxFeatures: '5000' };
         if (cql) extra.CQL_FILTER = cql;
         const url = buildWfsUrl(layerName, extra);
-        const geoRes = await fetchWithTimeout(url, { headers: { Authorization: geoAuth() } }, 20000);
+        const geoRes = await fetchWithTimeout(url, { headers: buildGeoHeaders() }, 20000);
         const body = Buffer.from(await geoRes.arrayBuffer());
         if (!geoRes.ok) return res.status(geoRes.status).send(body);
 
@@ -404,8 +508,12 @@ router.post('/feature-edit', requireAuth, requireEditor, async (req, res) => {
     }
 });
 
-router.post('/wfst', requireAuth, requireEditor, async (req, res) => {
+router.post('/wfst', requireAuth, requireSuperAdmin, async (req, res) => {
     try {
+        if (!ENABLE_RAW_WFST) {
+            return res.status(403).json({ error: 'Raw WFS-T proxy is disabled.' });
+        }
+
         const xml = typeof req.body === 'string' ? req.body : '';
         if (!xml) return res.status(400).json({ error: 'XML body required' });
         const text = await forwardTransaction(xml);
@@ -417,10 +525,10 @@ router.post('/wfst', requireAuth, requireEditor, async (req, res) => {
     }
 });
 
-router.get('/wms-layers', async (req, res) => {
+router.get('/wms-layers', requireAuth, requireEditor, async (req, res) => {
     try {
         const capUrl = `${GEO_BASE}/wms?service=WMS&request=GetCapabilities&version=1.1.1`;
-        const geoRes = await fetchWithTimeout(capUrl, { headers: { Authorization: geoAuth() } }, 12000);
+        const geoRes = await fetchWithTimeout(capUrl, { headers: buildGeoHeaders() }, 12000);
         if (!geoRes.ok) {
             const txt = await geoRes.text();
             return res.status(geoRes.status).json({ error: txt });
@@ -442,9 +550,9 @@ router.get('/wms-layers', async (req, res) => {
 
 router.get('/wms', async (req, res) => {
     try {
-        const params = new URLSearchParams(req.query).toString();
+        const params = buildSafeWmsParams(req.query).toString();
         const url = `${GEO_BASE}/wms?${params}`;
-        const geoRes = await fetchWithTimeout(url, { headers: { Authorization: geoAuth() } }, 15000);
+        const geoRes = await fetchWithTimeout(url, { headers: buildGeoHeaders() }, 15000);
         const contentType = geoRes.headers.get('content-type') || 'application/octet-stream';
         const body = Buffer.from(await geoRes.arrayBuffer());
         res.status(geoRes.status);
@@ -458,3 +566,7 @@ router.get('/wms', async (req, res) => {
 });
 
 export default router;
+
+
+
+

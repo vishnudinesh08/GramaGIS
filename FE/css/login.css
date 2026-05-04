@@ -32,7 +32,7 @@ body {
 .login-shell {
     position: relative;
     min-height: 100vh;
-    padding: 26px 30px 34px;
+    padding: 16px 30px 34px;
     overflow: hidden;
 }
 
@@ -77,15 +77,15 @@ body {
 }
 
 .login-topbar {
-    max-width: 1280px;
-    margin: 0 auto 26px;
+    width: 100%;
+    max-width: none;
+    margin: 0 0 26px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     gap: 16px;
 }
 
-.back-link,
 .secondary-link,
 .form-footer a {
     color: var(--muted);
@@ -94,11 +94,50 @@ body {
     transition: color 0.18s ease, transform 0.18s ease;
 }
 
-.back-link:hover,
 .secondary-link:hover,
 .form-footer a:hover {
     color: var(--text);
     transform: translateY(-1px);
+}
+
+.utility-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(96, 165, 250, 0.22);
+    background: rgba(15, 23, 36, 0.72);
+    color: var(--text);
+    text-decoration: none;
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.1;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.utility-link:hover {
+    transform: translateY(-1px);
+    border-color: rgba(46, 212, 122, 0.42);
+    background: rgba(8, 17, 29, 0.88);
+    color: #ecfdf5;
+}
+
+.utility-link svg {
+    flex-shrink: 0;
+}
+
+.utility-link-back {
+    min-width: 150px;
+    min-height: 46px;
+    width: fit-content;
+    white-space: nowrap;
+    align-self: flex-start;
+    justify-self: start;
 }
 
 .login-layout {
@@ -106,7 +145,8 @@ body {
     margin: 0 auto;
     min-height: calc(100vh - 120px);
     display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(400px, 0.88fr);
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
     align-items: center;
     gap: 34px;
 }
@@ -219,7 +259,7 @@ body {
 .login-card-wrap {
     max-width: 470px;
     width: 100%;
-    justify-self: end;
+    justify-self: center;
 }
 
 .login-header {
@@ -432,7 +472,7 @@ input:focus {
     }
 
     .login-card-wrap {
-        justify-self: stretch;
+        justify-self: center;
         max-width: 520px;
     }
 
@@ -443,12 +483,12 @@ input:focus {
 
 @media (max-width: 760px) {
     .login-shell {
-        padding: 20px 18px 28px;
+        padding: 16px 18px 28px;
     }
 
     .login-topbar {
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-start;
     }
 
     .trust-grid {
@@ -583,3 +623,6 @@ input:focus {
         animation: none !important;
     }
 }
+
+
+

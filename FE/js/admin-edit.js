@@ -1,5 +1,10 @@
 (function () {
     var API_BASE = window.GRAMA_API_BASE || (window.location.port === '3000' ? '' : 'http://localhost:3000');
+    var FE_BASE = API_BASE ? (API_BASE + '/FE/html') : '';
+
+    function appPage(name) {
+        return FE_BASE ? (FE_BASE + '/' + name) : name;
+    }
     var auth = JSON.parse(sessionStorage.getItem('gramagis_auth') || 'null');
 
     var LAYER_WFS_NAMES = {
@@ -17,7 +22,6 @@
         restaurants: 'Restaurants',
         roads: 'Roads',
         schools: 'Schools',
-        toilets: 'Toilets',
         ward_boundary: 'Ward Boundary',
         wards: 'Wards'
     };
@@ -189,7 +193,7 @@ function escapeHtml(value) {
         try {
             var layerName = LAYER_WFS_NAMES[currentLayer];
             var results = await Promise.all([
-                fetch(API_BASE + '/api/proxy/schema?layer=' + encodeURIComponent(layerName)).then(function (res) { return res.json().then(function (data) { if (!res.ok) throw new Error(data.error || ('Schema failed (' + res.status + ')')); return data; }); }),
+                fetch(API_BASE + '/api/proxy/schema?layer=' + encodeURIComponent(layerName), { headers: getAuthHeaders(false) }).then(function (res) { return res.json().then(function (data) { if (!res.ok) throw new Error(data.error || ('Schema failed (' + res.status + ')')); return data; }); }),
                 fetch(API_BASE + '/api/proxy/wfs?layer=' + encodeURIComponent(layerName)).then(function (res) { return res.json().then(function (data) { if (!res.ok) throw new Error(data.error || ('Layer load failed (' + res.status + ')')); return data; }); })
             ]);
             currentSchema = results[0] || { attributes: [], geometryField: null, geometryType: null };
@@ -199,10 +203,7 @@ function escapeHtml(value) {
             var selectedLabel = document.getElementById('layer-select').selectedOptions[0].text;
             document.getElementById('stat-layer').textContent = selectedLabel;
             document.getElementById('stat-count').textContent = currentRows.length;
-            var heroLayer = document.getElementById('hero-current-layer');
-            var heroCount = document.getElementById('hero-record-count');
-            if (heroLayer) heroLayer.textContent = selectedLabel;
-            if (heroCount) heroCount.textContent = currentRows.length;
+
         } catch (err) {
             console.error('Layer load error:', err);
             currentRows = [];
@@ -225,7 +226,7 @@ function escapeHtml(value) {
         body.innerHTML = rows.map(function (row) {
             var cells = cols.map(function (col) {
                 var value = col === 'geometry_wkt' ? row.geometryWkt : row.properties[col];
-                return '<td>' + escapeHtml(value == null || value === '' ? '�' : value) + '</td>';
+                return '<td>' + escapeHtml(value == null || value === '' ? 'Ã¯Â¿Â½' : value) + '</td>';
             }).join('');
             return '<tr>' + cells + '<td><div class="row-actions">' +
                 '<button class="action-btn edit" title="Edit" onclick="openEditModal(\'' + escapeHtml(row.rowKey) + '\')">Edit</button>' +
@@ -424,7 +425,7 @@ function escapeHtml(value) {
         var row = findRow(rowKey);
         if (!row) return;
         editingRowKey = rowKey;
-        document.getElementById('modal-title').textContent = 'Edit � ' + (row.properties.name || row.featureId || 'Record');
+        document.getElementById('modal-title').textContent = 'Edit Ã¯Â¿Â½ ' + (row.properties.name || row.featureId || 'Record');
         renderDynamicFields(row);
         document.getElementById('edit-modal').classList.add('open');
     }
@@ -626,7 +627,7 @@ function escapeHtml(value) {
 
     function handleLogout() {
         sessionStorage.removeItem('gramagis_auth');
-        window.location.href = 'index.html';
+        window.location.href = appPage('index.html');
     }
 
     function initAuth() {
@@ -637,7 +638,10 @@ function escapeHtml(value) {
             return false;
         }
         document.getElementById('logged-user').textContent = auth.username;
-        document.getElementById('sidebar-role').textContent = auth.role === 'superadmin' ? 'Super Admin' : 'Editor';
+        var sidebarRole = document.getElementById('sidebar-role');
+        if (sidebarRole) {
+            sidebarRole.textContent = auth.role === 'superadmin' ? 'Super Admin' : 'Editor';
+        }
         return true;
     }
 
@@ -661,6 +665,8 @@ function escapeHtml(value) {
     ensureFeedbackToolbar();
     if (initAuth()) loadLayerData();
 })();
+
+
 
 
 

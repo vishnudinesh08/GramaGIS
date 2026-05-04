@@ -23,40 +23,13 @@
     </div>
 
     <header class="login-topbar">
-        <a href="index.html" class="back-link">&larr; Back to Home</a>
-        <a href="feedback.html" class="secondary-link">Feedback</a>
+        <a href="map.html" class="back-link utility-link utility-link-back">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            <span>Back to Map</span>
+        </a>
     </header>
 
     <main class="login-layout">
-        <section class="login-brand-panel">
-            <div class="login-brand-lockup">
-                <span class="brand-badge">VG</span>
-                <div>
-                    <h1>GramaGIS</h1>
-                    <p>Vazhathope Panchayat administration workspace</p>
-                </div>
-            </div>
-
-            <div class="brand-copy-block">
-                <span class="panel-kicker">Secure admin access</span>
-                <h2>Manage public spatial data with a cleaner operational workspace.</h2>
-                <p>Sign in to access the admin dashboard, manage published records, review citizen feedback, and keep GeoServer-backed layers current.</p>
-            </div>
-
-            <div class="trust-grid">
-                <article class="trust-card">
-                    <span>Editing</span>
-                    <strong>WFS-T enabled workflows</strong>
-                    <p>Update live layer records and review spatial features in one place.</p>
-                </article>
-                <article class="trust-card">
-                    <span>Oversight</span>
-                    <strong>Transparent feedback review</strong>
-                    <p>Move reports through not resolved, in progress, and resolved stages.</p>
-                </article>
-            </div>
-        </section>
-
         <section class="login-card-wrap">
             <div class="login-header">
                 <span class="logo">GramaGIS</span>
@@ -118,11 +91,6 @@
                     <div class="spinner" id="spinner"></div>
                 </button>
 
-                <div class="form-footer">
-                    <a href="index.html">Back to Home</a>
-                    <span class="footer-dot">&middot;</span>
-                    <a href="feedback.html">Feedback</a>
-                </div>
             </div>
         </section>
     </main>
@@ -131,28 +99,14 @@
 <script src="/FE/js/config.js?v=20260309b"></script>
 <script>
     const API_BASE = window.GRAMA_API_BASE || (window.location.port === '3000' ? '' : 'http://localhost:3000');
+    const FE_BASE = API_BASE ? (API_BASE + '/FE/html') : '';
 
-    const DEMO_USERS = {
-        admin: { password: 'gramagis2024', role: 'superadmin', displayName: 'Super Admin' },
-        panchayat: { password: 'vazhathope', role: 'editor', displayName: 'Panchayat Editor' }
-    };
+    function appPage(name) {
+        return FE_BASE ? (FE_BASE + '/' + name) : name;
+    }
 
-    function loginWithDemoUser(username, password) {
-        const key = String(username || '').trim().toLowerCase();
-        const demo = DEMO_USERS[key];
-        if (!demo || demo.password !== password) return false;
-
-        sessionStorage.setItem('gramagis_auth', JSON.stringify({
-            username: key,
-            displayName: demo.displayName,
-            role: demo.role,
-            token: 'demo-local-token',
-            loggedIn: true,
-            timestamp: Date.now()
-        }));
-
-        window.location.href = 'edit.html';
-        return true;
+    if (window.location.protocol === 'file:' && FE_BASE) {
+        window.location.replace(appPage('login.html'));
     }
 
     async function handleLogin() {
@@ -176,7 +130,7 @@
         btnText.textContent = 'Signing in...';
         spinner.style.display = 'block';
         const controller = new AbortController();
-        const timeoutId = setTimeout(function () { controller.abort(); }, 3500);
+        const timeoutId = setTimeout(function () { controller.abort(); }, 6000);
 
         try {
             const res = await fetch(API_BASE + '/api/auth/login', {
@@ -204,12 +158,11 @@
                 timestamp: Date.now()
             }));
 
-            window.location.href = 'edit.html';
+            window.location.href = appPage('edit.html');
         } catch (err) {
             if (err && err.name === 'AbortError') {
-                err = new Error('Backend timeout. Using local demo login...');
+                err = new Error('Backend timeout. Please verify that the backend server is running.');
             }
-            if (loginWithDemoUser(username, password)) return;
 
             btn.disabled = false;
             btnText.textContent = 'Sign In';
@@ -230,3 +183,4 @@
 </script>
 </body>
 </html>
+

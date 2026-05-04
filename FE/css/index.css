@@ -511,3 +511,38 @@ body {
         animation: none !important;
     }
 }
+
+.utility-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(96, 165, 250, 0.22);
+    background: rgba(15, 23, 36, 0.72);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 700;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.utility-link:hover {
+    transform: translateY(-1px);
+    border-color: rgba(46, 212, 122, 0.42);
+    background: rgba(8, 17, 29, 0.88);
+    color: #ecfdf5;
+}
+
+.utility-link svg {
+    flex-shrink: 0;
+}
+
+.admin-btn.utility-link {
+    padding: 12px 18px;
+    border-color: rgba(96, 165, 250, 0.22);
+    background: rgba(15, 23, 36, 0.72);
+}

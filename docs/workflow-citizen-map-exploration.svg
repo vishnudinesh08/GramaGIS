@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #0f2742; }
+      .subtitle { font: 600 14px Arial, sans-serif; fill: #52667a; }
+      .lane { fill: #f8fbff; stroke: #8ca0b3; stroke-width: 1.5; }
+      .header { fill: #e7f0f8; stroke: #8ca0b3; stroke-width: 1.5; }
+      .lane-title { font: 700 16px Arial, sans-serif; fill: #16324f; }
+      .step { fill: #ffffff; stroke: #44627d; stroke-width: 1.8; rx: 10; ry: 10; }
+      .term { fill: #f3f7fb; stroke: #334e68; stroke-width: 1.8; }
+      .text { font: 600 13px Arial, sans-serif; fill: #243b53; }
+      .flow { stroke: #334e68; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#334e68"/>
+    </marker>
+  </defs>
+  <text x="600" y="38" text-anchor="middle" class="title">Use Case Workflow: Citizen Map Exploration</text>
+  <text x="600" y="60" text-anchor="middle" class="subtitle">Viewing village layers and feature details without editing data</text>
+  <rect x="40" y="90" width="220" height="580" class="lane"/>
+  <rect x="260" y="90" width="220" height="580" class="lane"/>
+  <rect x="480" y="90" width="220" height="580" class="lane"/>
+  <rect x="700" y="90" width="220" height="580" class="lane"/>
+  <rect x="920" y="90" width="220" height="580" class="lane"/>
+  <rect x="40" y="90" width="220" height="48" class="header"/>
+  <rect x="260" y="90" width="220" height="48" class="header"/>
+  <rect x="480" y="90" width="220" height="48" class="header"/>
+  <rect x="700" y="90" width="220" height="48" class="header"/>
+  <rect x="920" y="90" width="220" height="48" class="header"/>
+  <text x="150" y="120" text-anchor="middle" class="lane-title">Citizen</text>
+  <text x="370" y="120" text-anchor="middle" class="lane-title">Frontend</text>
+  <text x="590" y="120" text-anchor="middle" class="lane-title">Express Backend</text>
+  <text x="810" y="120" text-anchor="middle" class="lane-title">GeoServer</text>
+  <text x="1030" y="120" text-anchor="middle" class="lane-title">PostGIS</text>
+  <ellipse cx="150" cy="180" rx="42" ry="20" class="term"/>
+  <text x="150" y="185" text-anchor="middle" class="text">Start</text>
+  <rect x="80" y="230" width="140" height="48" class="step"/>
+  <text x="150" y="260" text-anchor="middle" class="text">Open map page</text>
+  <rect x="300" y="230" width="140" height="48" class="step"/>
+  <text x="370" y="252" text-anchor="middle" class="text">Load basemap</text>
+  <text x="370" y="268" text-anchor="middle" class="text">and UI controls</text>
+  <rect x="80" y="330" width="140" height="48" class="step"/>
+  <text x="150" y="360" text-anchor="middle" class="text">Toggle layers</text>
+  <rect x="300" y="330" width="140" height="48" class="step"/>
+  <text x="370" y="352" text-anchor="middle" class="text">Request WMS</text>
+  <text x="370" y="368" text-anchor="middle" class="text">tiles / info</text>
+  <rect x="520" y="330" width="140" height="48" class="step"/>
+  <text x="590" y="360" text-anchor="middle" class="text">Proxy request</text>
+  <rect x="740" y="330" width="140" height="48" class="step"/>
+  <text x="810" y="352" text-anchor="middle" class="text">Serve map layer</text>
+  <text x="810" y="368" text-anchor="middle" class="text">and features</text>
+  <rect x="960" y="330" width="140" height="48" class="step"/>
+  <text x="1030" y="360" text-anchor="middle" class="text">Read spatial data</text>
+  <rect x="80" y="450" width="140" height="48" class="step"/>
+  <text x="150" y="472" text-anchor="middle" class="text">Click feature</text>
+  <text x="150" y="488" text-anchor="middle" class="text">on map</text>
+  <rect x="300" y="450" width="140" height="48" class="step"/>
+  <text x="370" y="472" text-anchor="middle" class="text">Send feature</text>
+  <text x="370" y="488" text-anchor="middle" class="text">info request</text>
+  <rect x="520" y="450" width="140" height="48" class="step"/>
+  <text x="590" y="472" text-anchor="middle" class="text">Proxy feature</text>
+  <text x="590" y="488" text-anchor="middle" class="text">info request</text>
+  <rect x="740" y="450" width="140" height="48" class="step"/>
+  <text x="810" y="472" text-anchor="middle" class="text">Return selected</text>
+  <text x="810" y="488" text-anchor="middle" class="text">feature data</text>
+  <rect x="520" y="550" width="140" height="48" class="step"/>
+  <text x="590" y="572" text-anchor="middle" class="text">Return feature</text>
+  <text x="590" y="588" text-anchor="middle" class="text">payload</text>
+  <rect x="300" y="550" width="140" height="48" class="step"/>
+  <text x="370" y="572" text-anchor="middle" class="text">Display popup /</text>
+  <text x="370" y="588" text-anchor="middle" class="text">info panel</text>
+  <ellipse cx="590" cy="630" rx="42" ry="20" class="term"/>
+  <text x="590" y="635" text-anchor="middle" class="text">End</text>
+  <line x1="150" y1="200" x2="150" y2="230" class="flow"/>
+  <line x1="220" y1="254" x2="300" y2="254" class="flow"/>
+  <polyline points="370,278 370,304 150,304 150,330" class="flow"/>
+  <line x1="220" y1="354" x2="300" y2="354" class="flow"/>
+  <line x1="440" y1="354" x2="520" y2="354" class="flow"/>
+  <line x1="660" y1="354" x2="740" y2="354" class="flow"/>
+  <line x1="880" y1="354" x2="960" y2="354" class="flow"/>
+  <polyline points="1030,378 1030,524 900,524 900,474 880,474" class="flow"/>
+  <polyline points="150,378 150,450" class="flow"/>
+  <line x1="220" y1="474" x2="300" y2="474" class="flow"/>
+  <line x1="440" y1="474" x2="520" y2="474" class="flow"/>
+  <line x1="660" y1="474" x2="740" y2="474" class="flow"/>
+  <polyline points="810,498 810,574 660,574" class="flow"/>
+  <line x1="520" y1="574" x2="440" y2="574" class="flow"/>
+  <polyline points="370,598 370,630 548,630" class="flow"/>
+</svg>

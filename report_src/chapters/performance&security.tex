@@ -1,0 +1,142 @@
+
+\newpage
+%%\addcontentsline{toc}{chapter}{\MakeUppercase{Results and conclusions}}
+\thispagestyle{empty}
+%
+\begin{spacing}{1.5}
+%
+
+
+\end{spacing}
+\newpage
+
+\thispagestyle{empty}
+%
+\begin{spacing}{1.2}
+%
+
+\chapter{Performance and Security}
+
+\section{Performance}
+
+The Smart GECI system is designed to ensure efficient spatial data processing,
+responsive map visualization, and reliable concurrent access within an institutional
+environment.
+
+\subsection*{Map Response Time}
+
+\begin{itemize}
+    \item The system maintains an average map response time of \textbf{3–5 seconds}
+    for loading spatial layers and retrieving metadata.
+    \item Spatial queries from PostGIS are optimized using GiST indexing.
+    \item GeoServer caching mechanisms are utilized to reduce repeated rendering
+    overhead.
+\end{itemize}
+
+This ensures smooth interaction during zooming, panning, and feature selection.
+
+\subsection*{Concurrent User Support}
+
+\begin{itemize}
+    \item The system supports up to \textbf{100 concurrent users} without noticeable
+    performance degradation.
+    \item Backend API requests are handled asynchronously using Node.js’s
+    event-driven architecture.
+    \item Database query optimization minimizes latency under multi-user access.
+\end{itemize}
+
+This capacity is suitable for institutional-level deployment within campus networks.
+
+\subsection*{Dataset Update Propagation}
+
+\begin{itemize}
+    \item Administrative dataset updates are reflected within \textbf{10 seconds}
+    across the frontend interface.
+    \item GeoServer layer refresh mechanisms ensure updated spatial data is
+    republished promptly.
+    \item Metadata changes are immediately accessible through API endpoints.
+\end{itemize}
+
+This near real-time update capability ensures data consistency and reliability.
+
+\subsection*{Intelligent Query Performance}
+
+\begin{itemize}
+    \item Average response time for natural language queries is \textbf{2–6 seconds},
+    depending on query complexity.
+    
+    \item Retrieval-based responses (RAG) execute faster due to vector similarity
+    indexing.
+    
+    \item Structured NL2SQL queries are validated before execution to prevent
+    inefficient full-table scans.
+    
+    \item Spatial query results are optimized by limiting geometry payload size
+    before GeoJSON conversion.
+\end{itemize}
+
+The hybrid query architecture ensures AI-assisted querying without
+significantly affecting core map performance.
+
+\subsection*{Raster Analytics Performance (UHI Module)}
+
+\begin{itemize}
+    \item Raster layers are served as tiled map services to improve loading speed.
+    
+    \item Pixel-level value retrieval is optimized using preprocessed raster layers.
+    
+    \item Zonal statistics computation is performed asynchronously to prevent UI blocking.
+    
+    \item Regional-scale implementation under Idukki Taluk ensures meaningful
+    resolution without excessive pixel-level overhead.
+\end{itemize}
+
+These optimizations allow environmental analytics to coexist with
+infrastructure mapping without degrading system responsiveness.
+
+\section{Security}
+
+Security is a critical component of Smart GECI to protect institutional data,
+prevent unauthorized access, and ensure accountability.
+
+\subsection*{Secure Communication}
+
+\begin{itemize}
+    \item All client-server communication is conducted over \textbf{HTTPS}.
+    \item TLS/SSL encryption protects data in transit between frontend,
+    backend, and database layers.
+\end{itemize}
+
+\subsection*{Role-Based Authentication}
+
+\begin{itemize}
+    \item Role-Based Access Control (RBAC) differentiates permissions among:
+        \begin{itemize}
+            \item General Users (view-only access),
+            \item Registered Users (authenticated advanced access),
+            \item Administrators (full system control).
+        \end{itemize}
+    \item Administrative operations require authenticated access.
+    \item Sensitive endpoints are protected using authentication middleware.
+\end{itemize}
+
+\subsection*{Access Logging and Update History}
+
+\begin{itemize}
+    \item All administrative actions are logged for accountability.
+    \item Dataset updates are recorded with timestamps.
+    \item Unauthorized access attempts are logged and monitored.
+\end{itemize}
+
+\subsection*{AI Query Validation and Safety}
+
+\begin{itemize}
+    \item All generated SQL queries are validated before execution to prevent
+    injection or unsafe operations.
+    
+    \item Query execution is restricted to read-only operations for non-administrative users.
+    
+    \item Natural language inputs are sanitized before processing.
+    
+    \item Execution logs are maintained for intelligent query auditing.
+\end{itemize}

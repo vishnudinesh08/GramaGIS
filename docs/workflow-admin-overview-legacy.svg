@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860">
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #102a43; }
+      .subtitle { font: 600 14px Arial, sans-serif; fill: #486581; }
+      .lane { fill: #fbfdff; stroke: #829ab1; stroke-width: 1.5; }
+      .header { fill: #eaf2f8; stroke: #829ab1; stroke-width: 1.5; }
+      .lane-title { font: 700 16px Arial, sans-serif; fill: #102a43; }
+      .step { fill: #ffffff; stroke: #486581; stroke-width: 1.7; rx: 10; ry: 10; }
+      .decision { fill: #fffdf7; stroke: #b08900; stroke-width: 1.7; }
+      .term { fill: #f4f7fb; stroke: #334e68; stroke-width: 1.8; }
+      .text { font: 600 13px Arial, sans-serif; fill: #243b53; }
+      .flow { stroke: #334e68; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .label { font: 600 11px Arial, sans-serif; fill: #334e68; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#334e68"/>
+    </marker>
+  </defs>
+  <text x="700" y="34" text-anchor="middle" class="title">Admin Workflow of GramaGIS</text>
+  <text x="700" y="56" text-anchor="middle" class="subtitle">Administrative operational flow</text>
+
+  <rect x="40" y="80" width="260" height="740" class="lane"/>
+  <rect x="40" y="80" width="260" height="46" class="header"/>
+  <text x="170" y="109" text-anchor="middle" class="lane-title">Admin</text>
+  <rect x="300" y="80" width="260" height="740" class="lane"/>
+  <rect x="300" y="80" width="260" height="46" class="header"/>
+  <text x="430" y="109" text-anchor="middle" class="lane-title">Frontend</text>
+  <rect x="560" y="80" width="260" height="740" class="lane"/>
+  <rect x="560" y="80" width="260" height="46" class="header"/>
+  <text x="690" y="109" text-anchor="middle" class="lane-title">Backend</text>
+  <rect x="820" y="80" width="260" height="740" class="lane"/>
+  <rect x="820" y="80" width="260" height="46" class="header"/>
+  <text x="950" y="109" text-anchor="middle" class="lane-title">GeoServer</text>
+  <rect x="1080" y="80" width="260" height="740" class="lane"/>
+  <rect x="1080" y="80" width="260" height="46" class="header"/>
+  <text x="1210" y="109" text-anchor="middle" class="lane-title">Database</text>
+
+  <ellipse cx="170" cy="160" rx="40" ry="20" class="term"/>
+  <text x="170" y="165" text-anchor="middle" class="text">Start</text>
+  <rect x="350" y="210" width="160" height="48" class="step"/>
+  <text x="430" y="239" text-anchor="middle" class="text">Open console</text>
+
+  <polygon points="170,320 230,360 170,400 110,360" class="decision"/>
+  <text x="170" y="356" text-anchor="middle" class="text">Choose</text>
+  <text x="170" y="372" text-anchor="middle" class="text">task?</text>
+
+  <rect x="90" y="450" width="160" height="48" class="step"/>
+  <text x="170" y="479" text-anchor="middle" class="text">Manage GIS</text>
+  <rect x="350" y="450" width="160" height="48" class="step"/>
+  <text x="430" y="479" text-anchor="middle" class="text">Send edit request</text>
+  <rect x="610" y="450" width="160" height="48" class="step"/>
+  <text x="690" y="479" text-anchor="middle" class="text">Authorize action</text>
+  <rect x="870" y="450" width="160" height="48" class="step"/>
+  <text x="950" y="479" text-anchor="middle" class="text">Read / update</text>
+  <rect x="1130" y="450" width="160" height="48" class="step"/>
+  <text x="1210" y="479" text-anchor="middle" class="text">Save changes</text>
+  <rect x="350" y="540" width="160" height="48" class="step"/>
+  <text x="430" y="569" text-anchor="middle" class="text">Show updated data</text>
+
+  <rect x="90" y="540" width="160" height="48" class="step"/>
+  <text x="170" y="569" text-anchor="middle" class="text">Review feedback</text>
+  <rect x="350" y="620" width="160" height="48" class="step"/>
+  <text x="430" y="649" text-anchor="middle" class="text">Send status update</text>
+  <rect x="610" y="620" width="160" height="48" class="step"/>
+  <text x="690" y="649" text-anchor="middle" class="text">Authorize action</text>
+  <rect x="1130" y="620" width="160" height="48" class="step"/>
+  <text x="1210" y="649" text-anchor="middle" class="text">Fetch / update</text>
+  <rect x="350" y="700" width="160" height="48" class="step"/>
+  <text x="430" y="729" text-anchor="middle" class="text">Show feedback</text>
+
+  <ellipse cx="690" cy="780" rx="40" ry="20" class="term"/>
+  <text x="690" y="785" text-anchor="middle" class="text">End</text>
+
+  <polyline points="170,180 170,234 350,234" class="flow"/>
+  <polyline points="430,258 430,290 170,290 170,320" class="flow"/>
+
+  <text x="205" y="344" class="label">GIS</text>
+  <line x1="170" y1="400" x2="170" y2="450" class="flow"/>
+  <line x1="250" y1="474" x2="350" y2="474" class="flow"/>
+  <line x1="510" y1="474" x2="610" y2="474" class="flow"/>
+  <line x1="770" y1="474" x2="870" y2="474" class="flow"/>
+  <line x1="1030" y1="474" x2="1130" y2="474" class="flow"/>
+  <polyline points="1210,498 1210,564 510,564" class="flow"/>
+  <polyline points="430,588 540,588 540,760 690,760" class="flow"/>
+
+  <text x="98" y="420" class="label">Feedback</text>
+  <polyline points="110,360 75,360 75,564 90,564" class="flow"/>
+  <polyline points="250,564 300,564 300,644 350,644" class="flow"/>
+  <line x1="510" y1="644" x2="610" y2="644" class="flow"/>
+  <line x1="770" y1="644" x2="1130" y2="644" class="flow"/>
+  <polyline points="1210,668 1210,724 510,724" class="flow"/>
+  <polyline points="430,748 430,800 650,800" class="flow"/>
+</svg>

@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="680" viewBox="0 0 1100 680">
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #0f2742; }
+      .subtitle { font: 600 14px Arial, sans-serif; fill: #52667a; }
+      .lane { fill: #f8fbff; stroke: #8ca0b3; stroke-width: 1.5; }
+      .header { fill: #e7f0f8; stroke: #8ca0b3; stroke-width: 1.5; }
+      .lane-title { font: 700 16px Arial, sans-serif; fill: #16324f; }
+      .step { fill: #ffffff; stroke: #44627d; stroke-width: 1.8; rx: 10; ry: 10; }
+      .decision { fill: #fffdf5; stroke: #b08800; stroke-width: 1.8; }
+      .term { fill: #f3f7fb; stroke: #334e68; stroke-width: 1.8; }
+      .text { font: 600 13px Arial, sans-serif; fill: #243b53; }
+      .flow { stroke: #334e68; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#334e68"/>
+    </marker>
+  </defs>
+
+  <text x="550" y="38" text-anchor="middle" class="title">Use Case Workflow: Admin Login</text>
+  <text x="550" y="60" text-anchor="middle" class="subtitle">Administrator authentication before accessing protected operations</text>
+
+  <rect x="40" y="90" width="220" height="540" class="lane"/>
+  <rect x="260" y="90" width="220" height="540" class="lane"/>
+  <rect x="480" y="90" width="220" height="540" class="lane"/>
+  <rect x="700" y="90" width="220" height="540" class="lane"/>
+
+  <rect x="40" y="90" width="220" height="48" class="header"/>
+  <rect x="260" y="90" width="220" height="48" class="header"/>
+  <rect x="480" y="90" width="220" height="48" class="header"/>
+  <rect x="700" y="90" width="220" height="48" class="header"/>
+
+  <text x="150" y="120" text-anchor="middle" class="lane-title">Admin</text>
+  <text x="370" y="120" text-anchor="middle" class="lane-title">Frontend</text>
+  <text x="590" y="120" text-anchor="middle" class="lane-title">Express Backend</text>
+  <text x="810" y="120" text-anchor="middle" class="lane-title">Auth Database</text>
+
+  <ellipse cx="150" cy="180" rx="42" ry="20" class="term"/>
+  <text x="150" y="185" text-anchor="middle" class="text">Start</text>
+
+  <rect x="80" y="230" width="140" height="48" class="step"/>
+  <text x="150" y="260" text-anchor="middle" class="text">Open login page</text>
+
+  <rect x="80" y="320" width="140" height="48" class="step"/>
+  <text x="150" y="350" text-anchor="middle" class="text">Enter credentials</text>
+
+  <rect x="300" y="320" width="140" height="48" class="step"/>
+  <text x="370" y="350" text-anchor="middle" class="text">Submit login</text>
+
+  <rect x="520" y="320" width="140" height="48" class="step"/>
+  <text x="590" y="342" text-anchor="middle" class="text">Verify username</text>
+  <text x="590" y="358" text-anchor="middle" class="text">and password</text>
+
+  <rect x="740" y="320" width="140" height="48" class="step"/>
+  <text x="810" y="350" text-anchor="middle" class="text">Check app_users</text>
+
+  <polygon points="590,430 650,470 590,510 530,470" class="decision"/>
+  <text x="590" y="466" text-anchor="middle" class="text">Valid</text>
+  <text x="590" y="482" text-anchor="middle" class="text">login?</text>
+
+  <rect x="300" y="530" width="140" height="48" class="step"/>
+  <text x="370" y="552" text-anchor="middle" class="text">Open admin</text>
+  <text x="370" y="568" text-anchor="middle" class="text">dashboard</text>
+
+  <rect x="300" y="420" width="140" height="48" class="step"/>
+  <text x="370" y="442" text-anchor="middle" class="text">Show login error</text>
+  <text x="370" y="458" text-anchor="middle" class="text">and retry</text>
+
+  <ellipse cx="590" cy="600" rx="42" ry="20" class="term"/>
+  <text x="590" y="605" text-anchor="middle" class="text">End</text>
+
+  <line x1="150" y1="200" x2="150" y2="230" class="flow"/>
+  <line x1="150" y1="278" x2="150" y2="320" class="flow"/>
+  <line x1="220" y1="344" x2="300" y2="344" class="flow"/>
+  <line x1="440" y1="344" x2="520" y2="344" class="flow"/>
+  <line x1="660" y1="344" x2="740" y2="344" class="flow"/>
+  <polyline points="810,368 810,470 650,470" class="flow"/>
+
+  <text x="530" y="418" class="text">No</text>
+  <polyline points="530,470 470,470 470,444 440,444" class="flow"/>
+  <polyline points="300,444 260,444 260,344 220,344" class="flow"/>
+
+  <text x="560" y="535" class="text">Yes</text>
+  <polyline points="590,510 590,554 440,554" class="flow"/>
+  <polyline points="370,578 370,600 548,600" class="flow"/>
+</svg>
+

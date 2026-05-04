@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "hash-password": "node scripts/hash-password.js",
+    "seed-auth-users": "node scripts/seed-auth-users.js"
   },
   "keywords": ["gis", "panchayat", "geoserver"],
   "author": "",

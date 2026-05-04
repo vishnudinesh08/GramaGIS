@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1040" viewBox="0 0 1400 1040">
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #102a43; }
+      .subtitle { font: 600 14px Arial, sans-serif; fill: #486581; }
+      .lane { fill: #fbfdff; stroke: #829ab1; stroke-width: 1.5; }
+      .header { fill: #eaf2f8; stroke: #829ab1; stroke-width: 1.5; }
+      .lane-title { font: 700 16px Arial, sans-serif; fill: #102a43; }
+      .step { fill: #ffffff; stroke: #486581; stroke-width: 1.7; rx: 10; ry: 10; }
+      .decision { fill: #fffdf7; stroke: #b08900; stroke-width: 1.7; }
+      .term { fill: #f4f7fb; stroke: #334e68; stroke-width: 1.8; }
+      .text { font: 600 13px Arial, sans-serif; fill: #243b53; }
+      .small { font: 12px Arial, sans-serif; fill: #486581; }
+      .flow { stroke: #334e68; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .label { font: 600 11px Arial, sans-serif; fill: #334e68; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#334e68"/>
+    </marker>
+  </defs>
+  <text x="700" y="34" text-anchor="middle" class="title">Citizen Workflow of GramaGIS</text>
+  <text x="700" y="56" text-anchor="middle" class="subtitle">Citizen-side operational flow</text>
+
+  <rect x="40" y="80" width="260" height="920" class="lane"/>
+  <rect x="40" y="80" width="260" height="46" class="header"/>
+  <text x="170" y="109" text-anchor="middle" class="lane-title">Citizen</text>
+  <rect x="300" y="80" width="260" height="920" class="lane"/>
+  <rect x="300" y="80" width="260" height="46" class="header"/>
+  <text x="430" y="109" text-anchor="middle" class="lane-title">Frontend</text>
+  <rect x="560" y="80" width="260" height="920" class="lane"/>
+  <rect x="560" y="80" width="260" height="46" class="header"/>
+  <text x="690" y="109" text-anchor="middle" class="lane-title">Backend</text>
+  <rect x="820" y="80" width="260" height="920" class="lane"/>
+  <rect x="820" y="80" width="260" height="46" class="header"/>
+  <text x="950" y="109" text-anchor="middle" class="lane-title">GeoServer / Gemini</text>
+  <rect x="1080" y="80" width="260" height="920" class="lane"/>
+  <rect x="1080" y="80" width="260" height="46" class="header"/>
+  <text x="1210" y="109" text-anchor="middle" class="lane-title">Database</text>
+
+  <ellipse cx="170" cy="160" rx="40" ry="20" class="term"/>
+  <text x="170" y="165" text-anchor="middle" class="text">Start</text>
+  <rect x="90" y="210" width="160" height="48" class="step"/>
+  <text x="170" y="239" text-anchor="middle" class="text">Open portal</text>
+  <polygon points="170,300 230,340 170,380 110,340" class="decision"/>
+  <text x="170" y="336" text-anchor="middle" class="text">Choose</text>
+  <text x="170" y="352" text-anchor="middle" class="text">action?</text>
+
+  <rect x="90" y="430" width="160" height="48" class="step"/>
+  <text x="170" y="459" text-anchor="middle" class="text">Explore map</text>
+  <rect x="350" y="430" width="160" height="48" class="step"/>
+  <text x="430" y="452" text-anchor="middle" class="text">Send map /</text>
+  <text x="430" y="468" text-anchor="middle" class="text">search request</text>
+  <rect x="610" y="430" width="160" height="48" class="step"/>
+  <text x="690" y="452" text-anchor="middle" class="text">Route request</text>
+  <text x="690" y="468" text-anchor="middle" class="text">through API</text>
+  <rect x="870" y="410" width="160" height="48" class="step"/>
+  <text x="950" y="433" text-anchor="middle" class="text">GeoServer:</text>
+  <text x="950" y="449" text-anchor="middle" class="small">Fetch map data</text>
+  <polygon points="690,500 750,540 690,580 630,540" class="decision"/>
+  <text x="690" y="536" text-anchor="middle" class="text">NL</text>
+  <text x="690" y="552" text-anchor="middle" class="text">query?</text>
+  <rect x="870" y="560" width="160" height="48" class="step"/>
+  <text x="950" y="583" text-anchor="middle" class="text">Gemini:</text>
+  <text x="950" y="599" text-anchor="middle" class="small">Create filter</text>
+  <rect x="610" y="690" width="160" height="48" class="step"/>
+  <text x="690" y="713" text-anchor="middle" class="text">Process query</text>
+  <rect x="870" y="690" width="160" height="48" class="step"/>
+  <text x="950" y="713" text-anchor="middle" class="text">GeoServer:</text>
+  <text x="950" y="729" text-anchor="middle" class="small">Fetch results</text>
+  <rect x="610" y="790" width="160" height="48" class="step"/>
+  <text x="690" y="813" text-anchor="middle" class="text">Prepare</text>
+  <text x="690" y="829" text-anchor="middle" class="small">response</text>
+  <rect x="350" y="790" width="160" height="48" class="step"/>
+  <text x="430" y="819" text-anchor="middle" class="text">Show results</text>
+
+  <rect x="90" y="620" width="160" height="48" class="step"/>
+  <text x="170" y="649" text-anchor="middle" class="text">Enter feedback</text>
+  <rect x="350" y="620" width="160" height="48" class="step"/>
+  <text x="430" y="649" text-anchor="middle" class="text">Submit form</text>
+  <rect x="610" y="620" width="160" height="48" class="step"/>
+  <text x="690" y="649" text-anchor="middle" class="text">Validate input</text>
+  <rect x="1130" y="620" width="160" height="48" class="step"/>
+  <text x="1210" y="649" text-anchor="middle" class="text">Store record</text>
+  <rect x="350" y="710" width="160" height="48" class="step"/>
+  <text x="430" y="739" text-anchor="middle" class="text">Show confirmation</text>
+
+  <ellipse cx="690" cy="940" rx="40" ry="20" class="term"/>
+  <text x="690" y="945" text-anchor="middle" class="text">End</text>
+
+  <line x1="170" y1="180" x2="170" y2="210" class="flow"/>
+  <line x1="170" y1="258" x2="170" y2="300" class="flow"/>
+
+  <text x="196" y="410" class="label">Map</text>
+  <line x1="170" y1="380" x2="170" y2="430" class="flow"/>
+  <line x1="250" y1="454" x2="350" y2="454" class="flow"/>
+  <line x1="510" y1="454" x2="610" y2="454" class="flow"/>
+  <polyline points="690,478 690,500" class="flow"/>
+  <text x="725" y="508" class="label">No</text>
+  <polyline points="750,540 840,540 840,434 870,434" class="flow"/>
+  <polyline points="1030,434 1050,434 1050,814 770,814" class="flow"/>
+  <text x="720" y="604" class="label">Yes</text>
+  <polyline points="690,580 690,584 870,584" class="flow"/>
+  <polyline points="870,584 800,584 800,714 770,714" class="flow"/>
+  <line x1="770" y1="714" x2="870" y2="714" class="flow"/>
+  <polyline points="1030,714 1050,714 1050,814 770,814" class="flow"/>
+  <line x1="610" y1="814" x2="510" y2="814" class="flow"/>
+  <polyline points="430,838 430,880 690,880 690,920" class="flow"/>
+
+  <text x="72" y="560" class="label">Feedback</text>
+  <polyline points="110,340 60,340 60,596 170,596 170,620" class="flow"/>
+  <line x1="250" y1="644" x2="350" y2="644" class="flow"/>
+  <line x1="510" y1="644" x2="610" y2="644" class="flow"/>
+  <line x1="770" y1="644" x2="1130" y2="644" class="flow"/>
+  <polyline points="1210,668 1210,684 540,684 540,734 510,734" class="flow"/>
+  <polyline points="510,734 540,734 540,900 690,900 690,920" class="flow"/>
+</svg>

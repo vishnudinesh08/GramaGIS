@@ -1,0 +1,24 @@
+\newpage
+\thispagestyle{empty}
+%
+\begin{spacing}{1.5}
+%
+\chapter{Motivation}
+The increasing digitization of critical infrastructure has transformed traditional Water Distribution Systems~(WDS) into complex cyber-physical ecosystems. Modern WDS rely heavily on Supervisory Control and Data Acquisition~(SCADA) systems, remote sensors, and intelligent controllers to manage water quality, pressure regulation, and distribution efficiency. While this technological evolution has improved operational performance, it has simultaneously expanded the cyber-attack surface, making WDS vulnerable to sophisticated cyber-physical attacks~(CPAs). These attacks, including false data injection, valve manipulation, and coordinated sensor spoofing, can lead to physical damage, service disruption, and public safety risks. Consequently, ensuring the cybersecurity of WDS has become a critical challenge in maintaining the resilience and reliability of urban water infrastructures.
+
+Conventional cybersecurity solutions such as firewalls and rule-based IDS are inadequate for cyber-physical systems like Water Distribution Systems, as they rely on static rules and centralized processing that cannot adapt to dynamic, real-time threats. Although deep learning models such as the Rectilinear Hybrid Belief Classifier~(RHBC) have shown strong detection capabilities, their high computational demands limit deployment on resource-constrained edge devices. This highlights a critical research gap between model accuracy and practical deployability in real-world environments. The LightEdge-IDS aims to bridge this gap by developing zone-specific models to develop lightweight, real-time IDSs capable of efficient operation on edge hardware like Raspberry Pi or Jetson Nano. Ultimately, this approach promotes a decentralized, scalable, and energy-efficient security framework for safeguarding next-generation smart water infrastructures.
+
+\end{spacing}
+
+\newpage
+%\addcontentsline{toc}{chapter}{\MakeUppercase{Motivation}}
+\thispagestyle{empty}
+%
+\begin{spacing}{1.5}
+%
+\chapter{Problem Statement}
+Water Distribution Systems are evolving into complex cyber-physical infrastructures that rely heavily on digital automation, real-time monitoring, and intelligent control. While this transformation enhances operational efficiency, it also increases vulnerability to cyber-physical attacks such as false data injection, sensor spoofing, and actuator manipulation. Traditional intrusion detection systems, primarily designed for IT networks, struggle to address these dynamic and process-driven environments due to their reliance on static rules and centralized analysis. Furthermore, existing deep learning-based IDS models have shown promise in offline analysis but are often too computationally heavy for real-time edge deployment on devices like Raspberry Pi or Jetson Nano. 
+
+This creates a critical need for a lightweight, adaptive, and decentralized intrusion detection framework that can operate efficiently under resource constraints. The proposed LightEdge-IDS aims to meet this need by employing Graph Neural Networks~(GNNs) to capture spatial dependencies within the water network and neural adapters to enable zone-specific adaptation. This design allows localized learning without retraining the entire model, improving both scalability and responsiveness. By integrating model compression and real-time processing, LightEdge-IDS enables fast and reliable detection of anomalies directly at the edge, minimizing dependence on centralized systems. Ultimately, the project seeks to detect real-time cyber-physical attacks in water distribution systems using a lightweight, zone-adaptive Intrusion Detection System based on Graph Neural Networks and neural adapters.
+
+\end{spacing}

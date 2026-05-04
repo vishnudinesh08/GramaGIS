@@ -13,14 +13,13 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <!-- App Styles - Using absolute path from server root -->
-    <link rel="stylesheet" href="/FE/css/map.css?v=20260311c" />
+    <link rel="stylesheet" href="/FE/css/map.css?v=20260406b" />
 </head>
 <body>
 
     <!-- ============ SIDEBAR ============ -->
     <div id="sidebar">
         <div class="sidebar-brand">
-            <a href="/FE/html/index.html" class="home-link">&#8592; Back to Home</a>
             <div class="brand-row">
                 <div class="brand-dot">&#128506;</div>
                 <div class="brand-text">
@@ -69,10 +68,6 @@
                     <span class="summary-arrow">&#9654;</span>
                 </summary>
                 <div class="layer-list">
-                    <div class="layer-item">
-                        <input type="checkbox" id="check-toilets" onchange="toggleLayer('toilets', this)">
-                        <label for="check-toilets">Public Toilets</label>
-                    </div>
                     <div class="layer-item">
                         <input type="checkbox" id="check-community_halls" onchange="toggleLayer('community_halls', this)">
                         <label for="check-community_halls">Community Halls</label>
@@ -170,10 +165,6 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Feedback
             </a>
-            <a href="login.html" class="feedback-btn" style="background:linear-gradient(135deg, rgba(26,115,232,0.22), rgba(26,115,232,0.1)); border-color:rgba(96,165,250,0.4); margin-top:10px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                Admin Login
-            </a>
         </div>
 
         <div class="sidebar-footer">
@@ -183,9 +174,17 @@
 
     <!-- ============ MAP CONTAINER ============ -->
     <div id="map-container">
+        <div class="map-utility-bar">
+            <a href="/FE/html/login.html" class="utility-link utility-link-admin">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                <span>Admin Login</span>
+            </a>
+        </div>
+
         <!-- ============ SEARCH BAR ============ -->
         <div id="smart-search-container">
-            <div class="search-wrapper">
+            <div class="search-top-row">
+                <div class="search-wrapper">
                 <input
                     type="text"
                     id="userInput"
@@ -193,11 +192,7 @@
                     onkeydown="if(event.key==='Enter') triggerSearch()"
                 >
                 <button id="search-btn" onclick="triggerSearch()">&#128269;</button>
-            </div>
-            <div class="search-hints" aria-label="Suggested searches">
-                <button type="button" class="search-hint-chip" onclick="document.getElementById('userInput').value='schools in ward 7'; triggerSearch();">Schools in Ward 7</button>
-                <button type="button" class="search-hint-chip" onclick="document.getElementById('userInput').value='hospitals and banks in ward 5'; triggerSearch();">Hospitals and Banks</button>
-                <button type="button" class="search-hint-chip" onclick="document.getElementById('userInput').value='roads with surface concrete in ward 3'; triggerSearch();">Road Surface Query</button>
+                </div>
             </div>
         </div>
 
@@ -231,10 +226,15 @@
 
     <!-- ============ SCRIPTS - Using absolute paths from server root ============ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/FE/js/config.js?v=20260309b"></script>
-    <script src="/FE/js/query.js?v=20260311b"></script>
-    <script src="/FE/js/map.js?v=20260311c"></script>
+    <script src="/FE/js/config.js?v=20260326a"></script>
+    <script src="/FE/js/query.js?v=20260406b"></script>
+    <script src="/FE/js/map.js?v=20260406b"></script>
 
 </body>
 </html>
+
+
+
+
+
 

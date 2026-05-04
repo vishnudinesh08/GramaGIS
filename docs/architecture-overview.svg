@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1360" viewBox="0 0 1400 1360">
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #102a43; }
+      .subtitle { font: 700 14px Arial, sans-serif; fill: #486581; }
+      .layer-title { font: 700 22px Arial, sans-serif; fill: #102a43; }
+      .group-label { font: 700 17px Arial, sans-serif; fill: #243b53; }
+      .text { font: 600 16px Arial, sans-serif; fill: #243b53; }
+      .small { font: 700 14px Arial, sans-serif; fill: #486581; }
+      .platform { fill: #f4f7fb; stroke: #102a43; stroke-width: 3; rx: 18; ry: 18; }
+      .layer { fill: #fbfdff; stroke: #334e68; stroke-width: 2.4; rx: 16; ry: 16; }
+      .panel { fill: #f8fbff; stroke: #829ab1; stroke-width: 1.8; rx: 12; ry: 12; }
+      .card { fill: #ffffff; stroke: #486581; stroke-width: 1.8; rx: 10; ry: 10; }
+      .uml-stroke { stroke: #334e68; stroke-width: 2.2; fill: none; }
+      .db-fill { fill: #ffffff; stroke: #486581; stroke-width: 1.8; }
+      .arrow-public { stroke: #2f6f5e; stroke-width: 2.2; fill: none; marker-end: url(#arrowhead-public); }
+      .arrow-admin { stroke: #8b2e3c; stroke-width: 2.2; fill: none; marker-end: url(#arrowhead-admin); }
+      .arrow-system { stroke: #334e68; stroke-width: 2.1; fill: none; marker-end: url(#arrowhead-system); }
+    </style>
+    <marker id="arrowhead-public" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2f6f5e"/>
+    </marker>
+    <marker id="arrowhead-admin" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#8b2e3c"/>
+    </marker>
+    <marker id="arrowhead-system" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#334e68"/>
+    </marker>
+  </defs>
+
+  <text x="700" y="34" text-anchor="middle" class="title">GramaGIS Architecture</text>
+  <text x="700" y="56" text-anchor="middle" class="subtitle">High-Level System Architecture of GramaGIS</text>
+
+  <rect x="40" y="75" width="1320" height="1245" class="platform"/>
+
+  <rect x="90" y="110" width="1220" height="185" class="layer"/>
+  <text x="700" y="140" text-anchor="middle" class="layer-title">Actors</text>
+
+  <circle cx="300" cy="175" r="14" class="uml-stroke"/>
+  <line x1="300" y1="189" x2="300" y2="225" class="uml-stroke"/>
+  <line x1="276" y1="200" x2="324" y2="200" class="uml-stroke"/>
+  <line x1="300" y1="225" x2="280" y2="252" class="uml-stroke"/>
+  <line x1="300" y1="225" x2="320" y2="252" class="uml-stroke"/>
+  <text x="300" y="280" text-anchor="middle" class="text">Citizen</text>
+
+  <circle cx="820" cy="175" r="14" class="uml-stroke"/>
+  <line x1="820" y1="189" x2="820" y2="225" class="uml-stroke"/>
+  <line x1="796" y1="200" x2="844" y2="200" class="uml-stroke"/>
+  <line x1="820" y1="225" x2="800" y2="252" class="uml-stroke"/>
+  <line x1="820" y1="225" x2="840" y2="252" class="uml-stroke"/>
+  <text x="820" y="280" text-anchor="middle" class="text">Panchayat Admin</text>
+
+  <rect x="90" y="295" width="1220" height="175" class="layer"/>
+  <text x="700" y="325" text-anchor="middle" class="layer-title">Frontend Layer</text>
+
+  <rect x="140" y="355" width="180" height="82" class="card"/>
+  <text x="230" y="387" text-anchor="middle" class="text">Landing Page</text>
+  <text x="230" y="411" text-anchor="middle" class="small">index.html</text>
+
+  <rect x="370" y="355" width="180" height="82" class="card"/>
+  <text x="460" y="387" text-anchor="middle" class="text">Map Page</text>
+  <text x="460" y="411" text-anchor="middle" class="small">map.html</text>
+
+  <rect x="600" y="355" width="180" height="82" class="card"/>
+  <text x="690" y="387" text-anchor="middle" class="text">Feedback Page</text>
+  <text x="690" y="411" text-anchor="middle" class="small">feedback.html</text>
+
+  <rect x="830" y="355" width="180" height="82" class="card"/>
+  <text x="920" y="387" text-anchor="middle" class="text">Login Page</text>
+  <text x="920" y="411" text-anchor="middle" class="small">login.html</text>
+
+  <rect x="1060" y="355" width="180" height="82" class="card"/>
+  <text x="1150" y="387" text-anchor="middle" class="text">Admin Console</text>
+  <text x="1150" y="411" text-anchor="middle" class="small">edit.html</text>
+
+  <rect x="90" y="515" width="1220" height="205" class="layer"/>
+  <text x="700" y="545" text-anchor="middle" class="layer-title">Backend Layer</text>
+
+  <rect x="180" y="580" width="210" height="84" class="card"/>
+  <text x="285" y="613" text-anchor="middle" class="text">Express Server</text>
+  <text x="285" y="638" text-anchor="middle" class="small">server.js</text>
+
+  <rect x="470" y="580" width="150" height="84" class="card"/>
+  <text x="545" y="626" text-anchor="middle" class="text">Auth API</text>
+
+  <rect x="650" y="580" width="150" height="84" class="card"/>
+  <text x="725" y="626" text-anchor="middle" class="text">Feedback API</text>
+
+  <rect x="830" y="580" width="150" height="84" class="card"/>
+  <text x="905" y="626" text-anchor="middle" class="text">Query API</text>
+
+  <rect x="1010" y="580" width="150" height="84" class="card"/>
+  <text x="1085" y="626" text-anchor="middle" class="text">Geo Proxy API</text>
+
+  <rect x="90" y="760" width="1220" height="205" class="layer"/>
+  <text x="700" y="790" text-anchor="middle" class="layer-title">Service Layer</text>
+
+  <rect x="180" y="823" width="460" height="102" class="panel"/>
+  <text x="410" y="852" text-anchor="middle" class="group-label">Spatial Service</text>
+  <rect x="300" y="870" width="220" height="40" class="card"/>
+  <text x="410" y="895" text-anchor="middle" class="text">GeoServer</text>
+
+  <rect x="760" y="823" width="460" height="102" class="panel"/>
+  <text x="990" y="852" text-anchor="middle" class="group-label">AI Service</text>
+  <rect x="880" y="870" width="220" height="40" class="card"/>
+  <text x="990" y="895" text-anchor="middle" class="text">Gemini API</text>
+
+  <rect x="90" y="1020" width="1220" height="220" class="layer"/>
+  <text x="700" y="1050" text-anchor="middle" class="layer-title">Database Layer</text>
+  <rect x="545" y="1110" width="310" height="68" fill="#ffffff" stroke="none"/>
+  <ellipse cx="700" cy="1110" rx="155" ry="30" class="db-fill"/>
+  <path d="M 545 1110 L 545 1178 M 855 1110 L 855 1178" fill="none" stroke="#486581" stroke-width="1.8"/>
+  <path d="M 545 1178 A 155 30 0 0 0 855 1178" fill="none" stroke="#486581" stroke-width="1.8"/>
+  <text x="700" y="1150" text-anchor="middle" class="text">PostgreSQL + PostGIS</text>
+
+  <polyline points="300,292 300,335 230,335 230,355" class="arrow-public"/>
+  <polyline points="300,292 300,335 460,335 460,355" class="arrow-public"/>
+  <polyline points="300,292 300,335 690,335 690,355" class="arrow-public"/>
+
+  <polyline points="820,292 820,335 920,335 920,355" class="arrow-admin"/>
+  <polyline points="820,292 820,335 1150,335 1150,355" class="arrow-admin"/>
+
+  <polyline points="230,437 230,480 285,480 285,580" class="arrow-public"/>
+  <polyline points="460,437 460,490 285,490 285,580" class="arrow-public"/>
+  <polyline points="690,437 690,500 285,500 285,580" class="arrow-public"/>
+
+  <polyline points="920,437 920,485 285,485 285,580" class="arrow-admin"/>
+  <polyline points="1150,437 1150,475 285,475 285,580" class="arrow-admin"/>
+
+  <polyline points="390,669 390,680 545,680 545,664" class="arrow-system"/>
+  <polyline points="390,680 390,691 725,691 725,664" class="arrow-system"/>
+  <polyline points="390,691 390,702 905,702 905,664" class="arrow-system"/>
+  <polyline points="390,702 390,713 1085,713 1085,664" class="arrow-system"/>
+
+  <polyline points="905,664 905,807 1120,807 1120,890 1100,890" class="arrow-system"/>
+  <polyline points="1085,664 1085,807 260,807 260,890 300,890" class="arrow-system"/>
+
+  <polyline points="545,664 545,960 485,960 485,1134 545,1134" class="arrow-system"/>
+  <polyline points="725,664 725,960 915,960 915,1134 855,1134" class="arrow-system"/>
+  <polyline points="410,910 410,980 485,980 485,1160 545,1160" class="arrow-system"/>
+</svg>
+

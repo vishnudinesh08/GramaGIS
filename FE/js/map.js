@@ -1,4 +1,4 @@
-// Stable map setup: direct WMS (no embedded credentials), centered smaller view
+// Stable map setup via backend WMS proxy so the browser never talks to GeoServer directly.
 var map = L.map('map', {
     zoomControl: false,
     minZoom: 10,
@@ -18,9 +18,15 @@ var DEFAULT_CENTER = [9.846, 76.955];
 var DEFAULT_ZOOM = 12.5;
 map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
-var directWmsUrl = (window.GRAMA_GEOSERVER_WMS || 'http://127.0.0.1:8080/geoserver/wms').replace(/\/$/, '');
-var geoServerUrl = directWmsUrl;
+var API_BASE = window.GRAMA_API_BASE || (window.location.port === '3000' ? '' : 'http://localhost:3000');
+var geoServerUrl = (window.GRAMA_PROXY_WMS || (API_BASE + '/api/proxy/wms')).replace(/\/$/, '');
 var layers = {};
+
+var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+});
+osmLayer.addTo(map);
 
 function createWmsLayer(layerName, zIndex, options) {
     var opts = options || {};
@@ -37,12 +43,6 @@ function createWmsLayer(layerName, zIndex, options) {
     });
 }
 
-// Basemap
-layers.panchayat_basemap = createWmsLayer('gramagis:basemap', 1, {
-    className: 'basemap-tile',
-    opacity: 0.95
-});
-layers.panchayat_basemap.addTo(map);
 
 // Overlays used by sidebar checkboxes
 var layerConfig = {
@@ -52,7 +52,6 @@ var layerConfig = {
     schools: 'gramagis:Schools',
     colleges: 'gramagis:Colleges',
     community_halls: 'gramagis:Community halls',
-    toilets: 'gramagis:Toilets',
     hotels: 'gramagis:Hotels',
     restaurants: 'gramagis:Restaurants',
     roads: 'gramagis:Roads',
@@ -99,14 +98,9 @@ function toggleLayer(layerID, checkbox) {
     var selectedLayer = layers[layerID];
     if (!selectedLayer) return;
 
-    // Selecting layers manually exits search-focus mode and returns to base view.
-    if (typeof window.resetSearchContext === 'function') {
-        window.resetSearchContext(layers, layerID);
-    }
-
     if (checkbox.checked) {
         map.addLayer(selectedLayer);
-        if (layerID !== 'panchayat_basemap') selectedLayer.bringToFront();
+        selectedLayer.bringToFront();
     } else {
         map.removeLayer(selectedLayer);
     }
@@ -124,10 +118,12 @@ function escapeHtml(value) {
 function renderInfoPanel(props, layerKey) {
     var panel = document.getElementById('info-panel');
     var title = document.getElementById('info-title');
+    var subtitle = document.getElementById('info-subtitle');
     var content = document.getElementById('info-content');
     if (!panel || !title || !content) return;
 
     title.textContent = String(layerKey || 'Feature Details').replace(/_/g, ' ');
+    if (subtitle) subtitle.textContent = 'Vazhathope Panchayat';
 
     var rows = Object.entries(props || {}).map(function(entry) {
         return '<li><b>' + escapeHtml(entry[0]) + ':</b> ' + escapeHtml(entry[1]) + '</li>';
@@ -146,7 +142,7 @@ map.on('click', function(e) {
 
     var activeLayers = Object.entries(layers)
         .filter(function(entry) {
-            return map.hasLayer(entry[1]) && entry[0] !== 'panchayat_basemap';
+            return map.hasLayer(entry[1]);
         })
         .sort(function(a, b) {
             // Keep boundary as lowest priority so feature layers win when overlapping.
@@ -221,10 +217,3 @@ function closeInfoPanel() {
         toggleBtn.title = 'Minimize panel';
     }
 }
-
-
-
-
-
-
-

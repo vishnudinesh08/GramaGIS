@@ -1,7 +1,4 @@
-// query.js - GramaGIS Smart Query Engine
-// All WFS calls go through Express backend to avoid CORS issues.
 
-// Use relative URLs so it works regardless of port (same-origin).
 var API_BASE = window.GRAMA_API_BASE || (window.location.port === '3000' ? '' : 'http://localhost:3000');
 
 var CONTEXT_LAYER_KEYS = new Set(['wards', 'ward_boundary']);
@@ -37,8 +34,6 @@ var layerMapping = {
     roads:       'roads',
     school:      'schools',
     schools:     'schools',
-    toilet:      'toilets',
-    toilets:     'toilets',
     boundary:    'ward_boundary',
     ward:        'wards',
     wards:       'wards',
@@ -65,7 +60,6 @@ var LAYER_NAMES = {
     restaurants: 'Restaurants',
     roads: 'Roads',
     schools: 'Schools',
-    toilets: 'Toilets',
     ward_boundary: 'Ward Boundary',
     wards: 'Wards',
     feedback: 'feedback'
@@ -86,8 +80,7 @@ var LAYER_FIELDS = {
     post_offices: ['name', 'ward_no', 'ward_name', 'location', 'ownership', 'working_hours', 'latitude', 'longitude'],
     restaurants: ['name', 'ward_no', 'ward_name', 'location', 'latitude', 'longitude'],
     roads: ['name', 'location', 'highway', 'lanes', 'maxspeed', 'oneway', 'sidewalk', 'surface'],
-    schools: ['id', 'ward_no', 'ward_name', 'name', 'Location', 'category', 'ownership', 'latitude', 'longitude'],
-    toilets: ['id'],
+    schools: ['id', 'ward_no', 'ward_name', 'name', 'location', 'category', 'ownership', 'latitude', 'longitude'],
     ward_boundary: ['id', 'name'],
     wards: ['id', 'name', 'ward_name', 'admin', 'local_authority'],
     feedback: ['id', 'reporter_name', 'reporter_contact', 'category', 'ward', 'location_hint', 'title', 'description', 'priority', 'status', 'longitude', 'latitude']
@@ -145,7 +138,6 @@ Available layers and attributes:
 - restaurants: name, ward_no, ward_name, location
 - roads: name, location, highway, lanes, maxspeed, oneway, sidewalk, surface
 - schools: id, ward_no, ward_name, name, Location, category, ownership, latitude, longitude
-- toilets: id
 - ward_boundary: id, name
 - wards: id, name, ward_name, admin, local_authority
 - feedback: id, reporter_name, reporter_contact, category, ward, location_hint, title, description, priority, status, longitude, latitude
@@ -242,10 +234,12 @@ function getSearchExamples(layerKey) {
 function renderSearchSuggestionPanel(titleText, message, suggestions) {
     var panel = document.getElementById('info-panel');
     var title = document.getElementById('info-title');
+    var subtitle = document.getElementById('info-subtitle');
     var content = document.getElementById('info-content');
     if (!panel || !title || !content) return;
 
     title.textContent = titleText || 'Search Help';
+    if (subtitle) subtitle.textContent = 'Search guidance';
     content.innerHTML = '<div class="search-help">'
         + '<p>' + escapeHtml(message || 'Try a more specific search.') + '</p>'
         + '<div class="info-result-meta">Possible searches</div>'
@@ -257,6 +251,194 @@ function renderSearchSuggestionPanel(titleText, message, suggestions) {
     panel.classList.remove('minimized');
     panel.style.display = 'flex';
     panel.classList.add('visible');
+}
+
+var PLACE_NAME_ALIASES = {
+    cheruthony: 'cheruthoni'
+};
+var KNOWN_WARD_NAMES = [
+    'perumkala', 'mukkannankudy', 'painavu', 'gandhinagar', 'cheruthoni', 'cheruthony',
+    'thannikkandam', 'thadikampadu', 'karimban', 'manjappara', 'mulakuvally',
+    'kesamuni', 'vazhathope', 'peppara', 'maniyarankudy'
+];
+
+function normalizePlaceSearchValue(value) {
+    var raw = String(value || '').trim();
+    if (!raw) return raw;
+    var normalized = PLACE_NAME_ALIASES[raw.toLowerCase()];
+    return normalized || raw;
+}
+var SEARCH_STOP_WORDS = new Set([
+    'a', 'an', 'and', 'around', 'at', 'by', 'for', 'from', 'having', 'in', 'inside',
+    'is', 'near', 'of', 'on', 'or', 'the', 'to', 'ward', 'where', 'with', 'within'
+]);
+function normalizeSearchText(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+function getSearchableTextFields(layerKey) {
+    var preferred = ['name', 'ward_name', 'location', 'Location', 'title', 'description', 'type', 'category', 'ownership', 'address', 'area', 'admin', 'local_authority'];
+    return preferred.filter(function (field) {
+        return layerHasField(layerKey, field);
+    });
+}
+function extractFreeTextTokens(input) {
+    return normalizeSearchText(input).split(' ').filter(function (token) {
+        if (!token || token.length < 3) return false;
+        if (SEARCH_STOP_WORDS.has(token)) return false;
+        if (layerMapping[token]) return false;
+        if (ATTRIBUTE_ALIASES[token]) return false;
+        if (/^\d+$/.test(token)) return false;
+        return true;
+    });
+}
+function buildGenericTextClause(layerKey, rawTokens) {
+    var fields = getSearchableTextFields(layerKey);
+    if (!fields.length) return '';
+    var tokens = Array.from(new Set((rawTokens || []).map(function (token) {
+        return normalizePlaceSearchValue(token);
+    }).filter(Boolean)));
+    if (!tokens.length) return '';
+    return tokens.map(function (token) {
+        var safe = escapeCqlText(token);
+        return '(' + fields.map(function (field) {
+            return field + " ILIKE '%" + safe + "%'";
+        }).join(' OR ') + ')';
+    }).join(' AND ');
+}
+function buildPlaceClause(layerKey, placeValue, options) {
+    var normalizedPlace = normalizePlaceSearchValue(placeValue);
+    if (!normalizedPlace) return '';
+    var opts = options || {};
+    var fields = [];
+    if (opts.preferWard && layerHasField(layerKey, 'ward_name')) fields.push(getLayerFieldName(layerKey, 'ward_name'));
+    if (layerHasField(layerKey, 'location')) fields.push(getLayerFieldName(layerKey, 'location'));
+    if (layerHasField(layerKey, 'Location')) fields.push(getLayerFieldName(layerKey, 'Location'));
+    if (!fields.length && layerHasField(layerKey, 'ward_name')) fields.push(getLayerFieldName(layerKey, 'ward_name'));
+    if (!fields.length && layerHasField(layerKey, 'name')) fields.push(getLayerFieldName(layerKey, 'name'));
+    fields = Array.from(new Set(fields));
+    if (!fields.length) return '';
+    var safe = escapeCqlText(normalizedPlace);
+    if (fields.length === 1) {
+        return fields[0] + " ILIKE '%" + safe + "%'";
+    }
+    return '(' + fields.map(function (field) {
+        return field + " ILIKE '%" + safe + "%'";
+    }).join(' OR ') + ')';
+}
+function getBroadSearchLayerKeys(inputLower) {
+    var detected = detectLayerKeysInInput(inputLower || '');
+    var candidates = detected.length ? detected.slice() : Object.keys(LAYER_FIELDS).filter(function (layerKey) {
+        return getSearchableTextFields(layerKey).length > 0;
+    });
+    if (/\bward\b/i.test(inputLower || '') && candidates.indexOf('wards') === -1) {
+        candidates.unshift('wards');
+    }
+    return Array.from(new Set(candidates));
+}
+function getFeatureSearchText(feature, layerKey) {
+    var props = feature && feature.properties ? feature.properties : {};
+    return getSearchableTextFields(layerKey).map(function (field) {
+        return props[field];
+    }).filter(function (value) {
+        return value !== undefined && value !== null && String(value).trim() !== '';
+    }).join(' ');
+}
+function getWardPriorityScore(queryTokens, feature, layerKey) {
+    if (layerKey !== 'wards' && layerKey !== 'ward_boundary') return 0;
+    var props = feature && feature.properties ? feature.properties : {};
+    var wardFields = [props.name, props.ward_name].filter(function (value) {
+        return value !== undefined && value !== null && String(value).trim() !== '';
+    }).map(function (value) {
+        return normalizeSearchText(normalizePlaceSearchValue(value));
+    });
+    if (!wardFields.length || !queryTokens.length) return 0;
+    var score = 0;
+    var joinedQuery = queryTokens.join(' ').trim();
+    wardFields.forEach(function (fieldValue) {
+        if (!fieldValue) return;
+        if (joinedQuery && fieldValue === joinedQuery) score = Math.max(score, 120);
+        if (joinedQuery && fieldValue.indexOf(joinedQuery) !== -1) score = Math.max(score, 80);
+        var allTokensMatch = queryTokens.every(function (token) {
+            return fieldValue.indexOf(token) !== -1 || levenshtein(fieldValue, token) <= 2;
+        });
+        if (allTokensMatch) score = Math.max(score, 60);
+    });
+    return score;
+}
+function preferWardMatches(matches, queryTokens) {
+    var wardMatches = (matches || []).filter(function (feature) {
+        if (!feature || (feature.__layerKey !== 'wards' && feature.__layerKey !== 'ward_boundary')) return false;
+        return (feature.__wardPriorityScore || 0) >= 60;
+    });
+    if (!wardMatches.length) return matches;
+    return wardMatches.sort(function (a, b) {
+        return (b.__matchScore || 0) - (a.__matchScore || 0);
+    });
+}
+function getFuzzyScore(queryTokens, candidateText) {
+    var text = normalizeSearchText(candidateText);
+    if (!text) return 0;
+    var words = text.split(' ').filter(Boolean);
+    var score = 0;
+    queryTokens.forEach(function (token) {
+        if (text.indexOf(token) !== -1) {
+            score += 12;
+            return;
+        }
+        var bestWordScore = 0;
+        words.forEach(function (word) {
+            if (word === token) {
+                bestWordScore = Math.max(bestWordScore, 12);
+                return;
+            }
+            var distance = levenshtein(token, word);
+            var allowedDistance = token.length >= 8 ? 2 : 1;
+            if (distance <= allowedDistance) {
+                bestWordScore = Math.max(bestWordScore, 9 - distance);
+                return;
+            }
+            if (token.length >= 5 && (word.indexOf(token) !== -1 || token.indexOf(word) !== -1)) {
+                bestWordScore = Math.max(bestWordScore, 6);
+            }
+        });
+        score += bestWordScore;
+    });
+    return score;
+}
+async function runBroadSearch(inputLower) {
+    var candidateLayers = getBroadSearchLayerKeys(inputLower);
+    var queryTokens = extractFreeTextTokens(inputLower).map(function (token) {
+        return normalizeSearchText(normalizePlaceSearchValue(token));
+    }).filter(Boolean);
+    if (!candidateLayers.length || !queryTokens.length) return [];
+    var responses = await Promise.all(candidateLayers.map(async function (layerKey) {
+        try {
+            var geoName = LAYER_NAMES[layerKey] || layerKey;
+            var res = await fetch(API_BASE + '/api/proxy/wfs?layer=' + encodeURIComponent(geoName) + '&maxFeatures=250');
+            var data = await res.json();
+            if (!res.ok || !data.features) return [];
+            return data.features.map(function (feature) {
+                feature.__layerKey = layerKey;
+                var baseScore = getFuzzyScore(queryTokens, getFeatureSearchText(feature, layerKey));
+                var wardBoost = getWardPriorityScore(queryTokens, feature, layerKey);
+                feature.__wardPriorityScore = wardBoost;
+                feature.__matchScore = baseScore + wardBoost;
+                return feature;
+            }).filter(function (feature) {
+                return feature.__matchScore >= Math.max(8, queryTokens.length * 6);
+            });
+        } catch (err) {
+            console.error('Broad search fallback failed for ' + layerKey + ':', err);
+            return [];
+        }
+    }));
+    return preferWardMatches(responses.flat(), queryTokens).sort(function (a, b) {
+        return (b.__matchScore || 0) - (a.__matchScore || 0);
+    }).slice(0, 30);
 }
 
 function addCondition(parts, field, operator, value) {
@@ -382,17 +564,99 @@ function getWardNumbersFromInput(input) {
 }
 
 
+function resolveKnownWardName(value) {
+    var normalized = normalizeSearchText(normalizePlaceSearchValue(value));
+    if (!normalized) return '';
+    var exact = KNOWN_WARD_NAMES.find(function (name) {
+        return normalizeSearchText(normalizePlaceSearchValue(name)) === normalized;
+    });
+    if (exact) return normalizePlaceSearchValue(exact);
+    var closest = '';
+    var closestScore = Infinity;
+    KNOWN_WARD_NAMES.forEach(function (name) {
+        var normalizedName = normalizeSearchText(normalizePlaceSearchValue(name));
+        var distance = levenshtein(normalized, normalizedName);
+        if (distance < closestScore) {
+            closest = normalizePlaceSearchValue(name);
+            closestScore = distance;
+        }
+    });
+    return closestScore <= 2 ? closest : '';
+}
+function isStandaloneWardSearch(input) {
+    var normalized = normalizeSearchText(input || '');
+    if (!normalized || normalized.indexOf(' ') !== -1) return false;
+    return Boolean(resolveKnownWardName(normalized));
+}
+function hasExplicitWardIntent(input) {
+    if (/\bward\b/i.test(input || '')) return true;
+    return isStandaloneWardSearch(input);
+}
+function getStandaloneWardQuery(input) {
+    var normalized = normalizeSearchText(input || '');
+    if (!normalized || normalized.indexOf(' ') !== -1) return null;
+    var wardName = resolveKnownWardName(normalized);
+    if (!wardName) return null;
+    return {
+        layerKey: 'wards',
+        cql: "name ILIKE '%" + escapeCqlText(wardName) + "%'",
+        unmatchedFields: []
+    };
+}
 function getWardNameFromInput(input) {
+    var trailingMatch = input.match(/\b([a-z][a-z\s-]*)\s+ward\b/i);
+    if (trailingMatch) {
+        return String(trailingMatch[1] || '').replace(/\s+/g, ' ').trim();
+    }
+    var match = input.match(/\b(?:in|inside|within)\s+ward\s+([a-z][a-z\s-]*)/i);
+    if (match) {
+        var explicitWardName = String(match[1] || '')
+            .split(/\b(and|with|near|around|within)\b/i)[0]
+            .replace(/\s+/g, ' ')
+            .trim();
+        return explicitWardName;
+    }
+
     var inMatch = input.match(/\bin\s+([a-z][a-z\s-]*)/i);
     if (!inMatch) return '';
 
     var name = inMatch[1].trim();
     name = name.split(/\b(and|with|near|around|within)\b/i)[0].trim();
-    name = name.replace(/\s+/g, ' ').trim();
+    name = name.replace(/^ward\s+/i, '').replace(/\s+/g, ' ').trim();
     if (!name) return '';
-    if (/^ward\s*\d+$/i.test(name)) return '';
+    if (/^\d+$/.test(name)) return '';
     return name;
 }
+function hasMeaningfulLocalFilter(query) {
+    return Boolean(query && typeof query.cql === 'string' && query.cql.trim());
+}
+
+async function buildLayerQueryWithFallback(layerKey, inputLower, inputOriginal) {
+    var localQuery = buildLayerQueryFromInput(layerKey, inputLower);
+    if (hasMeaningfulLocalFilter(localQuery)) {
+        return localQuery;
+    }
+
+    var aiResult = await callGeminiNL2CQL(inputOriginal || inputLower);
+    if (!aiResult || !aiResult.layer) {
+        return localQuery;
+    }
+
+    var aiLayerKey = aiResult.layer;
+    var explicitWardMatch = inputLower.match(/ward\s*(\d+)/);
+    var explicitWardNo = explicitWardMatch ? explicitWardMatch[1] : null;
+    if (explicitWardNo && aiLayerKey === 'ward_boundary') aiLayerKey = 'wards';
+    if (aiLayerKey !== layerKey) {
+        return localQuery;
+    }
+
+    return {
+        layerKey: aiLayerKey,
+        cql: sanitizeCqlForLayer(aiLayerKey, remapCqlForLayer(aiLayerKey, normalizeCql(aiResult.cql || ''))),
+        unmatchedFields: localQuery.unmatchedFields || []
+    };
+}
+
 function detectLayerKeysInInput(input) {
     var found = [];
     var seen = new Set();
@@ -412,10 +676,27 @@ function detectLayerKeysInInput(input) {
     return found;
 }
 
+function getCheckedSearchLayerKeys() {
+    return Array.from(document.querySelectorAll('input[id^="check-"]:checked'))
+        .map(function (checkbox) {
+            return String(checkbox.id || '').replace(/^check-/, '');
+        })
+        .filter(function (layerKey) {
+            return layerKey && !CONTEXT_LAYER_KEYS.has(layerKey);
+        });
+}
+
+async function buildScopedLayerQueries(layerKeys, inputLower, inputOriginal) {
+    return Promise.all((layerKeys || []).map(function (layerKey) {
+        return buildLayerQueryWithFallback(layerKey, inputLower, inputOriginal);
+    }));
+}
+
 function buildLayerQueryFromInput(layerKey, input) {
     var filterParts = [];
     var wards = getWardNumbersFromInput(input);
     var wardNameText = getWardNameFromInput(input);
+    var resolvedWardName = resolveKnownWardName(wardNameText);
     var unmatchedFields = [];
     var explicitRequests = extractExplicitAttributeRequests(input);
 
@@ -433,10 +714,17 @@ function buildLayerQueryFromInput(layerKey, input) {
         addCondition(filterParts, getLayerFieldName(layerKey, 'ward'), 'text', wards[0]);
     }
 
-    if (!wards.length && wardNameText && layerHasField(layerKey, 'ward_name')) {
-        addCondition(filterParts, getLayerFieldName(layerKey, 'ward_name'), 'text', wardNameText);
-    } else if (!wards.length && wardNameText && (layerHasField(layerKey, 'location') || layerHasField(layerKey, 'Location'))) {
-        addCondition(filterParts, getLayerFieldName(layerKey, layerHasField(layerKey, 'location') ? 'location' : 'Location'), 'text', wardNameText);
+    var hasExplicitWardKeyword = /\bward\b/i.test(input);
+    var standaloneWardSearch = isStandaloneWardSearch(input);
+    if (!wards.length && resolvedWardName && (hasExplicitWardKeyword || standaloneWardSearch)) {
+        var wardClause = buildPlaceClause(layerKey, resolvedWardName, { preferWard: true });
+        if (wardClause) filterParts.push(wardClause);
+    } else if (!wards.length && wardNameText && hasExplicitWardKeyword) {
+        var explicitWardClause = buildPlaceClause(layerKey, wardNameText, { preferWard: true });
+        if (explicitWardClause) filterParts.push(explicitWardClause);
+    } else if (!wards.length && wardNameText) {
+        var placeClause = buildPlaceClause(layerKey, wardNameText, { preferWard: false });
+        if (placeClause) filterParts.push(placeClause);
     }
 
     explicitRequests.forEach(function (request) {
@@ -455,10 +743,15 @@ function buildLayerQueryFromInput(layerKey, input) {
             return;
         }
 
-        addCondition(filterParts, resolvedField, 'text', request.value);
+        addCondition(filterParts, resolvedField, 'text', normalizePlaceSearchValue(request.value));
     });
 
     extractImplicitAttributeFilters(layerKey, input, filterParts);
+
+    var genericTextClause = buildGenericTextClause(layerKey, extractFreeTextTokens(input));
+    if (genericTextClause && filterParts.indexOf(genericTextClause) === -1) {
+        filterParts.push(genericTextClause);
+    }
 
     var yearMatch = input.match(/\d{4}/);
     if (yearMatch && layerHasField(layerKey, 'date_established')) {
@@ -566,15 +859,16 @@ window.toggleResultCard = function (index) {
     if (!card) return;
     card.classList.toggle('expanded');
 };
-window.resetSearchContext = function (layers, selectedLayerKey) {
+window.resetSearchContext = function (layers, selectedLayerKey, options) {
     if (!isSearchModeActive) return;
+    var opts = options || {};
 
     if (searchHighlightLayer && map.hasLayer(searchHighlightLayer)) {
         map.removeLayer(searchHighlightLayer);
     }
 
     Object.keys(layers || {}).forEach(function (k) {
-        if (!layers[k] || k === 'panchayat_basemap') return;
+        if (!layers[k]) return;
 
         if (map.hasLayer(layers[k])) {
             map.removeLayer(layers[k]);
@@ -594,7 +888,7 @@ window.resetSearchContext = function (layers, selectedLayerKey) {
     isSearchModeActive = false;
 
     if (typeof closeInfoPanel === 'function') closeInfoPanel();
-    if (typeof centerBasemap === 'function') centerBasemap();
+    if (!opts.preserveView && typeof centerBasemap === 'function') centerBasemap();
 };
 
 window.toggleInfoPanelCollapse = function () {
@@ -612,6 +906,7 @@ window.toggleInfoPanelCollapse = function () {
 function renderSearchResults(features, layerKey, titleOverride) {
     var panel = document.getElementById('info-panel');
     var title = document.getElementById('info-title');
+    var subtitle = document.getElementById('info-subtitle');
     var content = document.getElementById('info-content');
     if (!panel || !title || !content) return;
 
@@ -625,7 +920,10 @@ function renderSearchResults(features, layerKey, titleOverride) {
         toggleBtn.title = 'Minimize panel';
     }
 
-    title.textContent = titleOverride || ((LAYER_NAMES[layerKey] || layerKey || 'Feature Details') + ' (' + searchResultState.features.length + ')');
+    title.textContent = titleOverride || (LAYER_NAMES[layerKey] || layerKey || 'Feature Details');
+    if (subtitle) {
+        subtitle.textContent = searchResultState.features.length + ' result' + (searchResultState.features.length === 1 ? '' : 's');
+    }
 
     if (!searchResultState.features.length) {
         content.innerHTML = '<p>No attributes found.</p>';
@@ -648,7 +946,7 @@ function renderSearchResults(features, layerKey, titleOverride) {
             + '</div>';
     }).join('');
 
-    content.innerHTML = '<div class="info-result-meta">Results: ' + searchResultState.features.length + '</div>' + cards;
+    content.innerHTML = cards;
     panel.style.display = 'flex';
     panel.classList.add('visible');
 }
@@ -665,21 +963,34 @@ window.executeSmartQuery = async function (layers) {
 
     var detectedLayers = detectLayerKeysInInput(inputLower);
     var detectedNonContextLayers = detectedLayers.filter(function (k) { return !CONTEXT_LAYER_KEYS.has(k); });
-    var isMultiLayerQuery = detectedNonContextLayers.length > 1;
+    var checkedSearchLayers = getCheckedSearchLayerKeys();
+    var scopedLayerKeys = detectedNonContextLayers.length ? detectedNonContextLayers : checkedSearchLayers;
+    var isMultiLayerQuery = scopedLayerKeys.length > 1;
     var layerQueries = [];
     var unmatchedFields = [];
 
     if (detectedNonContextLayers.length) {
-        layerQueries = detectedNonContextLayers.map(function (k) {
-            return buildLayerQueryFromInput(k, inputLower);
-        });
+        layerQueries = await buildScopedLayerQueries(detectedNonContextLayers, inputLower, input);
+    } else if (checkedSearchLayers.length) {
+        layerQueries = await buildScopedLayerQueries(checkedSearchLayers, inputLower, input);
     } else {
-        var result = await callGeminiNL2CQL(input);
-        if (!result || !result.layer) result = keywordFallback(inputLower);
+        var standaloneWardQuery = getStandaloneWardQuery(inputLower);
+        if (standaloneWardQuery) {
+            layerQueries.push(standaloneWardQuery);
+        } else {
+            var result = await callGeminiNL2CQL(input);
+            if (!result || !result.layer) result = keywordFallback(inputLower);
 
         if (!result || !result.layer) {
+            var broadMatches = await runBroadSearch(inputLower);
             btn.innerHTML = '&#128269;';
             btn.disabled = false;
+            if (broadMatches.length) {
+                renderSearchResults(broadMatches, 'combined', 'Search Results');
+                isSearchModeActive = true;
+                focusSearchResult(0);
+                return;
+            }
             renderSearchSuggestionPanel('Search Help', 'I could not identify a layer from that query. Try naming a layer and one or two attributes.', getSearchExamples());
             showToast('No matching layer found. Try a layer name like schools, hospitals, roads, or feedback.', 'error');
             return;
@@ -695,6 +1006,7 @@ window.executeSmartQuery = async function (layers) {
         if (layerKey === 'wards' && explicitWardNo && !cql) cql = "ward_name = '" + explicitWardNo + "'";
 
         layerQueries.push({ layerKey: layerKey, cql: cql, unmatchedFields: localQuery.unmatchedFields || [] });
+        }
     }
 
     layerQueries = layerQueries
@@ -716,7 +1028,7 @@ window.executeSmartQuery = async function (layers) {
     }
 
     Object.keys(layers).forEach(function (k) {
-        if (layers[k].setParams && k !== 'world_map' && k !== 'panchayat_basemap') {
+        if (layers[k].setParams && k !== 'world_map') {
             layers[k].setParams({ CQL_FILTER: '' });
         }
     });
@@ -764,7 +1076,7 @@ window.executeSmartQuery = async function (layers) {
         }
 
         if (mergedFeatures.length > 0) {
-            var title = isMultiLayerQuery ? ('Combined Results (' + mergedFeatures.length + ')') : null;
+            var title = isMultiLayerQuery ? 'Combined Results' : null;
             var panelLayerKey = layerQueries.length === 1 ? layerQueries[0].layerKey : 'combined';
             renderSearchResults(mergedFeatures, panelLayerKey, title);
             isSearchModeActive = true;
@@ -772,13 +1084,44 @@ window.executeSmartQuery = async function (layers) {
 
             var guidance = buildSearchGuidanceMessage(unmatchedFields);
             if (guidance) showToast(guidance, 'success');
-            else showToast('Showing ' + mergedFeatures.length + ' result' + (mergedFeatures.length > 1 ? 's' : '') + (isMultiLayerQuery ? ' across layers' : ''), 'success');
         } else if (successfulLayers > 0) {
+            if (hasExplicitWardIntent(inputLower)) {
+                var noResultMessage = buildSearchGuidanceMessage(unmatchedFields) || 'No matching features found in that ward.';
+                var firstLayer = layerQueries[0] ? layerQueries[0].layerKey : null;
+                renderSearchSuggestionPanel('No Results', noResultMessage, getSearchExamples(firstLayer));
+                showToast('No matching features found for that ward.', 'error');
+                return;
+            }
+
+            var fuzzyMatches = await runBroadSearch(inputLower);
+            if (fuzzyMatches.length) {
+                renderSearchResults(fuzzyMatches, 'combined', 'Closest Matches');
+                isSearchModeActive = true;
+                focusSearchResult(0);
+                showToast('No exact result found, so I showed the closest matches.', 'success');
+                return;
+            }
             var noResultMessage = buildSearchGuidanceMessage(unmatchedFields) || 'No matching features found. Try another attribute or ward.';
             var firstLayer = layerQueries[0] ? layerQueries[0].layerKey : null;
             renderSearchSuggestionPanel('No Results', noResultMessage, getSearchExamples(firstLayer));
             showToast('No matching features found for current filters.', 'error');
         } else {
+            if (hasExplicitWardIntent(inputLower)) {
+                var failedLayer = layerQueries[0] ? layerQueries[0].layerKey : null;
+                renderSearchSuggestionPanel('Query Help', 'The layer query failed for a ward-specific search. Please try the exact ward name or reload the layer.', getSearchExamples(failedLayer));
+                showToast('Layer query failed for that ward search.', 'error');
+                return;
+            }
+
+            var rescueMatches = await runBroadSearch(inputLower);
+            if (rescueMatches.length) {
+                renderSearchResults(rescueMatches, 'combined', 'Closest Matches');
+                isSearchModeActive = true;
+                focusSearchResult(0);
+                showToast('Exact layer query failed, so I showed the closest matches instead.', 'success');
+                return;
+            }
+
             var failedLayer = layerQueries[0] ? layerQueries[0].layerKey : null;
             renderSearchSuggestionPanel('Query Help', 'The layer query failed. This usually means the GeoServer layer schema needs refresh or the published fields changed.', getSearchExamples(failedLayer));
             showToast('Layer query failed. Check GeoServer layer fields.', 'error');
@@ -789,6 +1132,22 @@ window.executeSmartQuery = async function (layers) {
         showToast('Could not reach query service.', 'error');
     }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

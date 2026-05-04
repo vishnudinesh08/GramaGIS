@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GramaGIS - Feedback</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="../css/feedback.css?v=20260311c">
 </head>
 <body>
@@ -15,10 +16,14 @@
 </div>
 
 <div class="topbar">
-    <div class="topbar-logo">GramaGIS</div>
-    <a href="index.html">
+    <a href="map.html" class="utility-link utility-link-back">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-        Back to Home
+        <span>Back to Map</span>
+    </a>
+    <div class="topbar-logo">GramaGIS</div>
+    <a href="login.html" class="utility-link utility-link-admin">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        <span>Admin Login</span>
     </a>
 </div>
 
@@ -29,7 +34,7 @@
             Citizen Feedback
         </div>
         <h1>Feedback</h1>
-        <p>View community reports or submit a new one. Users enter longitude and latitude separately, and the system creates the map point automatically.</p>
+        <p>View community reports or submit a new one. You can use your current location, click a point on the map, or come in from the interactive map with the location already selected.</p>
     </div>
 
     <div class="feedback-hero-grid">
@@ -41,7 +46,7 @@
         <div class="hero-mini-card">
             <div class="hero-mini-label">Map Ready</div>
             <strong>Location-aware reports</strong>
-            <p>Longitude and latitude become a spatial point automatically for mapping.</p>
+            <p>Use your current location or drop a pin on the map instead of typing coordinates manually.</p>
         </div>
         <div class="hero-mini-card">
             <div class="hero-mini-label">Useful Details</div>
@@ -150,25 +155,29 @@
         <div class="location-helper-card">
             <div>
                 <strong>Location tip</strong>
-                <p>If you know the coordinates, enter longitude and latitude separately. The map point is generated automatically, so there is no need to type geometry.</p>
+                <p>Choose the issue location with your current position or by dropping a pin. You can drag the pin to fine-tune it before submitting.</p>
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label for="feedback-longitude">Longitude</label>
-                <div class="input-wrap">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M5 9l7-7 7 7"/><path d="M5 15l7 7 7-7"/></svg>
-                    <input type="text" id="feedback-longitude" placeholder="e.g. 76.96219163">
+        <div class="location-picker-card">
+            <div class="location-picker-header">
+                <div>
+                    <div class="location-picker-label">Issue Location</div>
+                    <p class="location-picker-copy">Click anywhere on the map below to drop a pin, or use your device location.</p>
+                </div>
+                <div class="location-picker-actions">
+                    <button class="btn-back location-btn" id="use-location-btn" type="button" onclick="useCurrentLocation()">Use My Location</button>
+                    <button class="btn-back location-btn" type="button" onclick="clearSelectedLocation()">Clear</button>
                 </div>
             </div>
-            <div class="form-group">
-                <label for="feedback-latitude">Latitude</label>
-                <div class="input-wrap">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M9 5l-7 7 7 7"/><path d="M15 5l7 7-7 7"/></svg>
-                    <input type="text" id="feedback-latitude" placeholder="e.g. 9.85267915">
-                </div>
+            <div id="location-status" class="location-status">No location selected yet. This step is optional, but it helps the Panchayat verify the issue faster.</div>
+            <div id="feedback-location-map" class="feedback-location-map" aria-label="Select issue location on map"></div>
+            <div class="location-coordinates" id="location-coordinates">
+                <span>Latitude: <strong id="selected-latitude">Not set</strong></span>
+                <span>Longitude: <strong id="selected-longitude">Not set</strong></span>
             </div>
+            <input type="hidden" id="feedback-longitude">
+            <input type="hidden" id="feedback-latitude">
         </div>
 <div class="form-group">
             <label for="issue-title">Issue Title <span class="req">*</span></label>
@@ -198,7 +207,7 @@
         <div class="submit-row">
             <div class="submit-note">
                 Your feedback is reviewed by Panchayat administrators.<br>
-                Longitude and latitude will be converted into a map point when provided.
+                The selected location will be converted into a map point automatically.
             </div>
             <button class="btn-submit" id="submit-btn" onclick="submitFeedback()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -218,11 +227,153 @@
 </div>
 
 <script src="/FE/js/config.js?v=20260309b"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const API_BASE = window.GRAMA_API_BASE || (window.location.port === '3000' ? '' : 'http://localhost:3000');
     const STATUS_LABELS = { not_resolved: 'Not Resolved', in_progress: 'In Progress', resolved: 'Resolved' };
+    const DEFAULT_CENTER = [9.846, 76.955];
+    const DEFAULT_ZOOM = 13;
     let selectedCategory = null;
     let selectedPriority = null;
+    let feedbackLocationMap = null;
+    let feedbackMarker = null;
+
+    function setLocationStatus(message, type) {
+        const statusEl = document.getElementById('location-status');
+        if (!statusEl) return;
+        statusEl.className = 'location-status' + (type ? ' ' + type : '');
+        statusEl.textContent = message;
+    }
+
+    function updateLocationSummary(latitude, longitude) {
+        document.getElementById('selected-latitude').textContent = latitude ? Number(latitude).toFixed(6) : 'Not set';
+        document.getElementById('selected-longitude').textContent = longitude ? Number(longitude).toFixed(6) : 'Not set';
+    }
+
+    function ensureFeedbackLocationMap() {
+        if (feedbackLocationMap || !window.L) return;
+
+        feedbackLocationMap = L.map('feedback-location-map', {
+            zoomControl: true,
+            attributionControl: true
+        }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(feedbackLocationMap);
+
+        feedbackLocationMap.on('click', function (evt) {
+            setSelectedLocation(evt.latlng.lat, evt.latlng.lng, {
+                message: 'Pin dropped on the map. Drag it if you want to adjust the spot.'
+            });
+        });
+    }
+
+    function ensureMarker() {
+        ensureFeedbackLocationMap();
+        if (!feedbackLocationMap || feedbackMarker) return;
+
+        feedbackMarker = L.marker(DEFAULT_CENTER, { draggable: true });
+        feedbackMarker.on('dragend', function (evt) {
+            const point = evt.target.getLatLng();
+            setSelectedLocation(point.lat, point.lng, {
+                keepView: true,
+                message: 'Location updated from the map pin.'
+            });
+        });
+        feedbackMarker.addTo(feedbackLocationMap);
+    }
+
+    function setSelectedLocation(latitude, longitude, options) {
+        const opts = options || {};
+        const lat = Number(latitude);
+        const lng = Number(longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+        ensureMarker();
+        document.getElementById('feedback-latitude').value = lat.toFixed(6);
+        document.getElementById('feedback-longitude').value = lng.toFixed(6);
+        updateLocationSummary(lat, lng);
+
+        if (feedbackMarker) {
+            feedbackMarker.setLatLng([lat, lng]);
+        }
+
+        if (feedbackLocationMap && !opts.keepView) {
+            feedbackLocationMap.setView([lat, lng], Math.max(feedbackLocationMap.getZoom(), 16), { animate: true });
+        }
+
+        setLocationStatus(opts.message || 'Location selected. You can continue, or drag the pin to refine it.', 'success');
+    }
+
+    function clearSelectedLocation() {
+        document.getElementById('feedback-latitude').value = '';
+        document.getElementById('feedback-longitude').value = '';
+        updateLocationSummary('', '');
+        if (feedbackMarker) {
+            feedbackLocationMap.removeLayer(feedbackMarker);
+            feedbackMarker = null;
+        }
+        if (feedbackLocationMap) {
+            feedbackLocationMap.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate: false });
+        }
+        setLocationStatus('No location selected yet. This step is optional, but it helps the Panchayat verify the issue faster.');
+    }
+
+    function useCurrentLocation() {
+        const button = document.getElementById('use-location-btn');
+        if (!navigator.geolocation) {
+            setLocationStatus('This browser does not support geolocation. Please select the spot on the map instead.', 'error');
+            return;
+        }
+
+        button.disabled = true;
+        button.textContent = 'Locating...';
+        setLocationStatus('Requesting your current location...');
+
+        navigator.geolocation.getCurrentPosition(function (position) {
+            button.disabled = false;
+            button.textContent = 'Use My Location';
+            setSelectedLocation(position.coords.latitude, position.coords.longitude, {
+                message: 'Current location captured. Drag the pin if you need to correct it.'
+            });
+        }, function (error) {
+            button.disabled = false;
+            button.textContent = 'Use My Location';
+
+            const messageMap = {
+                1: 'Location access was denied. Please allow it, or drop a pin on the map instead.',
+                2: 'Your location could not be determined. Please try again, or drop a pin on the map.',
+                3: 'Location request timed out. Please try again, or drop a pin on the map.'
+            };
+
+            setLocationStatus(messageMap[error.code] || 'Could not get your location. Please drop a pin on the map instead.', 'error');
+        }, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+        });
+    }
+
+    function applyPrefilledLocationFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const lat = params.get('lat');
+        const lng = params.get('lng');
+        const shouldOpenSubmit = params.get('open') === 'submit' || (lat && lng);
+        const source = params.get('source');
+
+        if (shouldOpenSubmit) {
+            switchFeedbackTab('submit');
+        }
+
+        if (lat && lng) {
+            const sourceText = source === 'map' ? 'interactive map' : 'shared link';
+            setSelectedLocation(lat, lng, {
+                message: 'Location loaded from the ' + sourceText + '. You can drag the pin if needed.'
+            });
+        }
+    }
 
     function switchFeedbackTab(tab) {
         const viewCard = document.getElementById('feedback-view-card');
@@ -238,7 +389,14 @@
         viewBtn.className = tab === 'view' ? 'btn-submit' : 'btn-back';
         submitBtn.className = tab === 'submit' ? 'btn-submit' : 'btn-back';
 
-        if (tab === 'view') loadPublicFeedback();
+        if (tab === 'view') {
+            loadPublicFeedback();
+        } else {
+            ensureFeedbackLocationMap();
+            setTimeout(function () {
+                if (feedbackLocationMap) feedbackLocationMap.invalidateSize();
+            }, 80);
+        }
     }
 
     function selectChip(el, groupId) {
@@ -363,6 +521,7 @@ function escapeHtml(value) {
             success.classList.add('show');
             success.style.display = 'block';
             loadPublicFeedback();
+            window.history.replaceState({}, '', window.location.pathname);
         })
         .catch(err => {
             btn.disabled = false;
@@ -371,9 +530,12 @@ function escapeHtml(value) {
         });
     }
 
+    ensureFeedbackLocationMap();
+    applyPrefilledLocationFromQuery();
     loadPublicFeedback();
 </script>
 </body>
 </html>
+
 
 

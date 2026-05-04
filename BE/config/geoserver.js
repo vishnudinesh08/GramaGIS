@@ -22,5 +22,6 @@ export function toLayerName(key) {
 export const ALLOWED_LAYERS = new Set([
     "banks", "boundaries", "colleges", "fire_stations", "government_offices",
     "hospitals", "hotels", "petrol_pumps", "police_stations", "post_offices",
-    "restaurants", "roads", "schools", "toilets", "ward_boundary"
+    "restaurants", "roads", "schools", "ward_boundary"
 ]);
+

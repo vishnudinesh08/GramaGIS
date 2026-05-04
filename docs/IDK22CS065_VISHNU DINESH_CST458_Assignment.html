@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IDK22CS065_VISHNU DINESH_CST458_Assignment</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #111;
+      font-size: 10.5pt;
+      line-height: 1.28;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 18pt;
+      margin: 0 0 12px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    h2 {
+      font-size: 14pt;
+      margin: 18px 0 8px;
+      font-weight: 700;
+    }
+
+    h3 {
+      font-size: 12pt;
+      margin: 14px 0 6px;
+      font-weight: 700;
+    }
+
+    ul {
+      margin: 4px 0 10px 22px;
+      padding: 0;
+    }
+
+    li {
+      margin: 2px 0;
+    }
+
+    .top-meta {
+      margin-bottom: 12px;
+    }
+
+    .top-meta div {
+      margin: 2px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>CST458 - Assignment 2</h1>
+
+  <div class="top-meta">
+    <div><strong>Name:</strong> Vishnu Dinesh</div>
+    <div><strong>Roll No:</strong> IDK22CS065</div>
+    <div><strong>Course:</strong> CST458 - Software Testing</div>
+    <div><strong>Topic:</strong> Review of Testing Practices Followed in the Final Year Project</div>
+  </div>
+
+  <h2>Part A - Project Details</h2>
+
+  <h3>1. Project Identification</h3>
+  <ul>
+    <li>Project Title: GramaGIS - A Smart Panchayat GIS Portal</li>
+    <li>Team Members: Akshay Kumar A S, Malavika Sasi, Sajin Pathrose, Vishnu Dinesh</li>
+    <li>Guide Name: Dr. Dhanya S Pankaj</li>
+    <li>Problem Addressed: Fragmented rural administrative and infrastructure data lacked a single spatial platform for transparent governance</li>
+    <li>Technologies: HTML, CSS, JavaScript, Leaflet, Node.js, Express.js, PostgreSQL, PostGIS, GeoServer, JWT, Gemini API</li>
+    <li>Modules: public portal, interactive map, smart query, feedback module, admin login, GIS data management, feedback review</li>
+  </ul>
+
+  <h2>Part B - Testing Practices</h2>
+
+  <h3>2. Testing Planning</h3>
+  <ul>
+    <li>No formal test plan prepared</li>
+    <li>No documented test case sheet available</li>
+    <li>Requirements reviewed using objectives, workflows, and module list</li>
+    <li>Expected outputs identified for login, feedback, search, and admin actions</li>
+    <li>No separate test dataset prepared</li>
+  </ul>
+
+  <h3>3. Unit Testing</h3>
+  <ul>
+    <li>Individually checked auth, feedback, query, and proxy routes</li>
+    <li>Frontend logic checked for login, search, map, feedback form, and admin edit actions</li>
+    <li>Unit testing done manually by team members during development</li>
+    <li>White box ideas used informally while checking validations and branches</li>
+    <li>No formal unit test cases prepared</li>
+    <li>No unit testing framework used</li>
+    <li>Defects found: validation issues, session expiry issues, schema mismatch cases, UI text issues</li>
+  </ul>
+
+  <h3>4. Integration Testing</h3>
+  <ul>
+    <li>Frontend and Express backend integrated first</li>
+    <li>JWT login flow tested from login page to protected admin page</li>
+    <li>Feedback form tested with backend validation and database storage</li>
+    <li>Smart query tested with frontend, Gemini, GeoServer, and displayed results</li>
+    <li>Admin edit flow tested with schema fetch, WFS data load, and WFS-T update</li>
+    <li>Module interactions tested manually through browser execution</li>
+    <li>Issues found: CORS problems, timeout cases, schema mismatch, token passing errors</li>
+  </ul>
+
+  <h3>5. System Testing</h3>
+  <ul>
+    <li>Full system tested as a complete working application</li>
+    <li>Features tested: map loading, layer toggle, feature info, smart query, feedback, login, admin edit</li>
+    <li>Citizen workflow and admin workflow checked end-to-end</li>
+    <li>UI, backend, database, and output consistency checked together</li>
+    <li>Issues found: external service failure cases, empty-result handling, auth interruptions</li>
+  </ul>
+
+  <h3>6. Acceptance Testing</h3>
+  <ul>
+    <li>Guide and faculty reviewed the project during demos and evaluations</li>
+    <li>Feedback received on interface clarity, feature usefulness, and correctness of outputs</li>
+    <li>Suggested corrections were implemented in UI and workflow behavior</li>
+    <li>Main project objective was achieved</li>
+    <li>Formal testing by real Panchayat users was limited</li>
+  </ul>
+
+  <h3>7. Functional Testing</h3>
+  <ul>
+    <li>Major functions tested against project requirements</li>
+    <li>Tested functions: login, protected access, layer loading, search, feedback submit, feedback update, GIS edit, download</li>
+    <li>Both valid and invalid inputs were tried</li>
+    <li>Missing tests: malformed AI output, concurrent edits, unsupported geometry, external failure cases</li>
+    <li>Issues found: search parsing failure, invalid input handling gaps, GeoServer field mismatch</li>
+  </ul>
+
+  <h3>8. Performance / Stress Testing</h3>
+  <ul>
+    <li>Response time observed informally during application use</li>
+    <li>Login, search, WMS/WFS loading, feedback submission, and admin save delay were checked</li>
+    <li>Timeout handling exists in backend service calls</li>
+    <li>No formal load testing done</li>
+    <li>No multiple-user stress testing done</li>
+    <li>No CPU or memory profiling report prepared</li>
+    <li>Performance testing remained limited</li>
+  </ul>
+
+  <h3>9. Usability Testing</h3>
+  <ul>
+    <li>Ease of use checked manually for landing page, map, feedback page, login, and admin dashboard</li>
+    <li>Navigation and instruction clarity were checked during usage</li>
+    <li>Search help text, alerts, and status labels were improved during development</li>
+    <li>Some UI changes were made based on observed difficulties</li>
+    <li>Issues noticed: GIS-specific terms, complex admin flow, limited mobile verification</li>
+  </ul>
+
+  <h3>10. Regression Testing</h3>
+  <ul>
+    <li>Previous features rechecked manually after modifications</li>
+    <li>Repeated testing done after updates in auth, feedback, query, and proxy modules</li>
+    <li>Bug fixes could introduce new errors because modules are tightly connected</li>
+    <li>No regression checklist maintained</li>
+    <li>No automated regression suite available</li>
+  </ul>
+
+  <h2>Part C - Testing Approaches Used</h2>
+
+  <h3>11. Black Box Testing Practices</h3>
+  <ul>
+    <li>Input-output testing done for login, feedback, search, map data load, and downloads</li>
+    <li>Valid and invalid credentials, categories, wards, layers, and statuses were tried</li>
+    <li>Boundary checks considered for longitude, latitude, ward parsing, and login attempt limits</li>
+    <li>Invalid conditions tested using empty fields, wrong token, incomplete coordinates, and unsupported actions</li>
+    <li>Examples: invalid login rejection, invalid feedback coordinates rejection, unsupported layer rejection</li>
+  </ul>
+
+  <h3>12. White Box Testing Practices</h3>
+  <ul>
+    <li>Code-level logic checked manually while debugging</li>
+    <li>Conditions, branches, and loops checked in auth, feedback validation, role checks, and proxy logic</li>
+    <li>Internal paths checked for timeout, invalid token, missing env, and invalid GeoServer response cases</li>
+    <li>Exception handling paths were also verified informally</li>
+    <li>Examples: login rate-limit branch, status normalization logic, WKT-to-GML conversion path</li>
+  </ul>
+
+  <h3>13. Grey Box Testing Practices</h3>
+  <ul>
+    <li>Testing done with partial internal knowledge of routes, schema, database behavior, and roles</li>
+    <li>API structure and database knowledge helped identify errors faster</li>
+    <li>Both UI behavior and internal workflow were used during testing</li>
+    <li>Examples: checking UI search against backend query behavior, checking feedback status persistence, checking schema-driven admin editor</li>
+  </ul>
+
+  <h2>Part D - Evaluation and Improvements</h2>
+
+  <h3>14. Gaps in Existing Testing Process</h3>
+  <ul>
+    <li>No formal test planning</li>
+    <li>No documented test cases</li>
+    <li>No automated unit testing</li>
+    <li>No automated integration or regression testing</li>
+    <li>Weak performance and stress testing</li>
+    <li>Limited acceptance testing with real users</li>
+    <li>Missing coverage for some edge cases and external failures</li>
+    <li>No defect tracking tool used</li>
+    <li>Time and coordination constraints reduced testing depth</li>
+  </ul>
+
+  <h3>15. Suggested Improvements</h3>
+  <ul>
+    <li>Add unit tests for validation logic, auth, query parsing, and XML generation</li>
+    <li>Add integration tests for login, feedback, query, and admin CRUD workflows</li>
+    <li>Prepare a system test checklist before release or demo</li>
+    <li>Perform formal acceptance testing with guide and real target users</li>
+    <li>Maintain a regression checklist after every major update</li>
+    <li>Document test cases with valid, invalid, and boundary inputs</li>
+    <li>Use automation tools such as Jest, Supertest, and Playwright</li>
+    <li>Improve usability and performance testing with structured observation and load tools</li>
+    <li>Use proper defect tracking and retesting records</li>
+  </ul>
+
+  <h3>16. Final Reflection</h3>
+  <ul>
+    <li>Manual functional, integration, and system testing were done reasonably well</li>
+    <li>Formal planning, documentation, automation, and load testing were insufficient</li>
+    <li>Test design and acceptance planning should have started earlier</li>
+    <li>Better testing would improve reliability, usability, and overall project quality</li>
+  </ul>
+</body>
+</html>

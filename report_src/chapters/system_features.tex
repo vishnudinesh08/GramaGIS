@@ -1,0 +1,97 @@
+﻿\newpage
+%\addcontentsline{toc}{chapter}{\MakeUppercase{System Features}}
+\thispagestyle{empty}
+%
+\begin{spacing}{1.2}
+%
+\chapter{System Features}
+
+This chapter describes the core functional capabilities of the GramaGIS platform, covering each feature that enables efficient spatial data management and public accessibility for Panchayat administration. From interactive map visualization and intelligent natural language querying to secure administrative data editing, the features outlined here collectively fulfill the system's goal of delivering a comprehensive and user-friendly village governance tool.
+
+\section{Interactive Village Infrastructure Map}
+
+The Interactive Infrastructure Map is the primary visualization interface of GramaGIS. It provides a dynamic, web-based representation of Panchayat assets, administrative boundaries, and feedback-linked context. The map renders spatial datasets using GeoServer-published WMS layers, while detailed filtered result sets are retrieved through the WFS proxy workflow \cite{fu2020webgis}.
+
+\subsection*{Functional Capabilities}
+
+\begin{itemize}
+\item \textbf{Dynamic Layer Toggling:} Users can overlay multiple layers such as ward boundaries, road networks, institutions, and amenity layers to visualize spatial relationships.
+
+\item \textbf{High-Resolution Navigation:} Supports smooth zoom and pan functionality across the entire Panchayat area, allowing users to move from a broad administrative perspective down to individual mapped assets.
+
+\item \textbf{Feature Interaction:} Users can click on map entities to trigger the metadata retrieval system, displaying attribute information specific to that spatial feature.
+\end{itemize}
+
+\section{Contextual Metadata Retrieval}
+
+The metadata retrieval feature bridges the gap between spatial visualization and descriptive data. When a feature is selected on the map, GeoServer returns the relevant feature attributes through WMS \texttt{GetFeatureInfo}, and the interface presents them in a structured details panel. For search-driven workflows, the Express.js WFS proxy also returns filtered feature collections for richer result inspection.
+
+\subsection*{Key Capabilities}
+
+\begin{itemize}
+\item \textbf{Structured Information Display:} Shows critical data such as building names, ward numbers, facility type, and other stored attributes.
+\item \textbf{Dynamic Data Fetching:} Metadata is retrieved in real time from live services, ensuring that updates made by administrators are reflected for the user.
+\item \textbf{Category Filtering:} Allows the interface to highlight specific infrastructure types based on metadata and search filters.
+\end{itemize}
+
+\section{Express.js REST API \& Secure Proxy}
+
+GramaGIS provides a structured RESTful API layer built on Express.js. This acts as the integration point between the frontend, the spatial services, the feedback workflow, and the AI subsystem \cite{fu2020webgis}.
+
+\subsection*{API Features}
+
+\begin{itemize}
+\item \textbf{Protected GeoServer Workflows:} Authentication, schema access, feature editing, downloads, and feedback management are routed through Express.js.
+\item \textbf{JSON-Formatted Responses:} Feedback responses, AI-generated query results, and WFS feature collections are delivered in standardized JSON format for interoperability.
+\end{itemize}
+
+\section{JWT-Based Role Checks}
+
+To ensure the security of sensitive Panchayat data, GramaGIS implements JWT-based role checks enforced at the Express.js middleware level.
+
+\subsection*{User Access Levels}
+
+\begin{itemize}
+\item \textbf{Public Viewer (Unauthenticated):}
+\begin{itemize}
+\item View-only access to public infrastructure layers and search features.
+\item Interaction with metadata panels and the feedback interface.
+\end{itemize}
+
+\item \textbf{Administrative User (Authenticated):}
+\begin{itemize}
+    \item Access to the Transactional GIS (T-GIS) suite \cite{smart_panchayat2023}.
+    \item Permission to add, delete, or modify supported layers through protected routes.
+    \item Access to export tools exposed by the administrative interface.
+\end{itemize}
+\end{itemize}
+
+\section{Intelligent Query System}
+
+The Intelligent Query System allows users to interact with the geospatial database using natural language. This feature eliminates the need for complex search forms or SQL knowledge \cite{liu2025nalspatial}.
+
+\subsection*{Core Functional Capabilities}
+
+\begin{itemize}
+\item \textbf{Natural Language Processing:} Users can submit queries such as \textit{``Show me all primary schools in Ward 5.''}
+
+\item \textbf{NL2CQL Translation:} The system parses user intent to generate a valid \textbf{CQL (Command Query Language)} filter \cite{liu2025nalspatial}.
+
+\item \textbf{Live Spatial Rendering:} Once translated, the system applies the filter to the map layers and fetches matching feature collections for the result panel.
+\end{itemize}
+
+\section{Administrative Data Management (T-GIS)}
+
+A core utility for Panchayat officials, this module allows for the digital upkeep of village records directly through the browser \cite{smart_panchayat2023}.
+
+\subsection*{Key Functional Capabilities}
+
+\begin{itemize}
+\item \textbf{Spatial Feature Editing:} Admins can update supported features through form-driven editing and the custom geometry editor, with changes synchronized via \textbf{WFS-T} \cite{fu2020webgis}.
+
+\item \textbf{Attribute Modification:} Provides a secure form interface to update information stored in published layers.
+
+\item \textbf{Bulk Data Export:} Enables officials to download specific datasets in GeoJSON or CSV formats from the administrative interface for documentation and sharing.
+\end{itemize}
+
+\end{spacing}

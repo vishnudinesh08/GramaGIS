@@ -1,0 +1,964 @@
+
+\newpage
+%\addcontentsline{toc}{chapter}{\MakeUppercase{Database Design}}
+\thispagestyle{empty}
+%
+\begin{spacing}{1.5}
+
+\chapter{Design}
+This chapter provides an overview of the system's structure and goals, and the context necessary for understanding the design of LightEdge-IDS.
+
+\section{Introduction}
+
+This section establishes the foundational principles and scope addressed by this Software Design Document.
+
+\subsection{Purpose}
+This Software Design Document describes the architecture and system design of LightEdge-IDS, a lightweight real-time intrusion detection system for cyber-physical attacks in water distribution systems. This document serves as a blueprint for the development and implementation of the system, providing comprehensive details about the architectural design, data structures, component interactions, and deployment strategies. 
+
+\subsection{Scope}
+The LightEdge-IDS system aims to provide real-time detection of cyber-physical attacks in water distribution networks by leveraging graph neural networks~(GNN), gated recurrent units~(GRU), and zone-specific adaptation techniques. The
+system is designed to operate efficiently on resource constrained edge devices commonly deployed in critical infrastructure environments. The primary scope and design objectives of LightEdge-IDS include the following key components:
+
+\begin{itemize}
+    \item \textbf{Multi-source Data Integration:}  
+    The system integrates heterogeneous data sources, including real-time sensor readings, network topology information, and pre-identified attack patterns. By fusing these diverse inputs, LightEdge-IDS can construct a holistic representation of the water distribution network, enabling more accurate modeling of both physical and cyber interdependencies.
+
+    \item \textbf{Graph-based Spatial-Temporal Analysis:}  
+    A graph-based analytical pipeline forms the core of LightEdge-IDS, where each node represents a sensor or control unit, and edges denote hydraulic or communication relationships. The use of Graph Neural Networks enables the system to learn complex spatial correlations across interconnected nodes, while the incorporation of Gated Recurrent Units captures the temporal dynamics of system behavior over time.
+
+    \item \textbf{Zone-based Detection using the Leiden Algorithm:}  
+    To enhance scalability and localization accuracy, LightEdge-IDS employs the Leiden algorithm for community detection, segmenting the water network into distinct operational zones. This zone-wise specialization not only improves detection granularity but also reduces computational overhead by focusing resources on relevant network segments.
+
+    \item \textbf{Real-time Inference for Operational Deployment:}  
+    The system architecture prioritizes efficient inference mechanisms to ensure near-instantaneous detection of intrusions. This real-time inference capability is vital for minimizing response latency in safety-critical applications, allowing immediate alert generation and mitigation actions to prevent cascading failures or physical damages in the infrastructure.
+
+    \item \textbf{Scalable and Modular Architecture:}  
+    LightEdge-IDS is built on a scalable framework capable of adapting to various network sizes and complexities, from small municipal water grids to large-scale utility infrastructures. The architecture also allows horizontal scalability, where additional zones or modules can be integrated seamlessly as the network expands.
+
+\end{itemize}
+
+
+
+\subsection{Overview}
+
+This chapter provides a comprehensive overview of the design and architecture of the LightEdge-IDS system, detailing its structure, components, and operational workflow. The chapter is organized into eight main sections, beginning with a high-level system overview that introduces the objectives, scope, and key functionalities of the intrusion detection system tailored for water distribution networks. Following this, the system architecture is described in detail, including both logical and physical perspectives, highlighting how individual modules interact and are mapped to edge devices, central servers, and SCADA systems.  
+
+The chapter also includes a detailed discussion on data design, covering the organization, preprocessing, and transformation of sensor, network, and historical attack data. Component design is presented next, illustrating the modular structure of the system and explaining the responsibilities of each functional unit. Human interface design is discussed, emphasizing interactive dashboards and monitoring tools that allow operators to visualize system status, alerts, and network behavior effectively.  
+
+Additionally, the chapter presents a requirements traceability section, linking functional and non-functional requirements to specific system components to ensure clarity, accountability, and validation of design decisions. Appendices provide supplementary information, including abbreviations, glossaries, and reference datasets used for system development and evaluation. Throughout the chapter, comprehensive diagrams are included to represent the system’s structure, behavior, and deployment. These diagrams employ both standard UML notation and specialized network diagrams to provide clarity and facilitate understanding of complex interactions within the system.  
+
+
+
+
+
+
+\newpage
+\section{System Overview}
+
+The LightEdge-IDS system is an intelligent intrusion detection platform designed specifically for protecting water distribution systems against sophisticated cyber-physical attacks. The system follows a systematic seven-stage pipeline that transforms raw infrastructure data into actionable security intelligence.
+
+The system integrates three critical data sources: real-time sensor measurements from SCADA systems, network topology information from EPANET models, and historical attack pattern databases. Through advanced machine learning techniques, the system learns both global patterns across the entire water distribution network and zone-specific characteristics that capture local variations.
+
+The core innovation lies in the hierarchical learning approach, where a global GNN-GRU model captures universal attack signatures and spatial-temporal dependencies, while lightweight zone-specific adapters fine-tune detection for local operational characteristics. This architecture enables deployment on resource-constrained edge devices while maintaining high detection accuracy.
+
+The system is built on four fundamental design principles:
+\begin{itemize}
+    \item \textbf{Hierarchical Learning:}  
+    Combines a global model that identifies universal attack signatures with zone-level adaptation modules that learn local operational nuances, improving detection precision and adaptability.
+
+    \item \textbf{Resource Efficiency:}  
+    Employs model optimization and compression to ensure lightweight computation, reduced energy consumption, and compatibility with embedded edge hardware used in critical infrastructure.
+
+    \item \textbf{Real-time Processing:}  
+    Enables low-latency inference for prompt anomaly detection and response, ensuring that potential cyber-physical threats are identified before they impact operational safety.
+
+    \item \textbf{Scalable Architecture:}  
+    Features a modular, extensible design that supports diverse network sizes and complexities, facilitating seamless integration with existing SCADA systems and future scalability.
+\end{itemize}
+
+
+\newpage
+\section{System Architecture}
+
+This section details the high-level design of the LightEdge-IDS, specifying its architectural style and providing a comprehensive decomposition into deployable components, logical modules, and core software classes.
+
+\subsection{Architectural Design}
+
+The LightEdge-IDS system employs a multi-layered architecture that supports real-time cyber-physical attack detection through a modular, scalable design.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.5cm, scale=0.77, every node/.style={transform shape}]
+
+% Presentation Layer
+\node[component, fill=white] (ui) {User Interface};
+\node[component, fill=white, right=of ui] (monitor) {Monitoring Dashboard};
+
+% Application Layer
+\node[component, fill=white, below=of ui] (query) {Query Engine};
+\node[component, fill=white, right=of query] (preprocessor) {Data Preprocessor};
+
+% Processing Layer
+\node[component, fill=white, below=of query] (global) {Global GNN-GRU Model};
+\node[component, fill=white, right=of global] (adapter) {Zone Adapters};
+\node[component, fill=white, below=of global] (inference) {Inference Engine};
+
+% Data Layer
+\node[data, fill=white, below=of inference] (vector) {Vector Store};
+\node[data, fill=white, right=of vector] (graph) {Graph Database};
+\node[data, fill=white, below=of vector] (timeseries) {Time-Series DB};
+
+% External Services
+\node[component, fill=white, right=of adapter, xshift=1cm] (scada) {SCADA Interface};
+\node[component, fill=white, below=of scada] (epanet) {EPANET Parser};
+
+% Connections
+\draw[arrow,black] (ui) -- (query);
+\draw[arrow,black] (monitor) -- (query);
+\draw[arrow,black] (query) -- (preprocessor);
+\draw[arrow,black] (preprocessor) -- (global);
+\draw[arrow,black] (global) -- (adapter);
+\draw[arrow,black] (adapter) -- (inference);
+\draw[arrow,black] (inference) -- (vector);
+\draw[arrow,black] (inference) -- (graph);
+\draw[arrow,black] (inference) -- (timeseries);
+\draw[arrow,black] (scada) -- (preprocessor);
+\draw[arrow,black] (epanet) -- (preprocessor);
+
+% Layer labels
+\node[draw, dashed, fit=(ui) (monitor), label=above:Presentation Layer] {};
+\node[draw, dashed, fit=(query) (preprocessor), label=left:Application Layer] {};
+\node[draw, dashed, fit=(global) (adapter) (inference), label=left:Processing Layer] {};
+\node[draw, dashed, fit=(vector) (graph) (timeseries), label=left:Data Layer] {};
+\node[draw, dashed, fit=(scada) (epanet), label=right:External Services] {};
+
+\end{tikzpicture}
+\caption{System Architecture Diagram}
+\end{figure}
+
+The architecture consists of five distinct layers:
+\begin{itemize}
+   
+\item \textbf{Presentation Layer:} Provides user interfaces for system interaction and real-time monitoring dashboards for security analysts. This layer helps visualize system alerts, performance metrics, and detected anomalies in a clear and easy-to-understand way. It also lets operators set detection parameters and access historical incident reports to aid in making informed decisions.
+\bigbreak
+\item \textbf{Application Layer:} Manages query processing and data preprocessing operations, coordinating between external data sources and processing components. It ensures that incoming data is cleaned, normalized, and structured before passing it to the detection pipeline. This layer also helps maintain data quality and reduce latency, which improves the overall system responsiveness.
+\bigbreak
+\item \textbf{Processing Layer:} Implements the core machine learning pipeline with the global GNN-GRU model, zone-specific adapters, and the inference engine for real-time detection.
+\bigbreak
+\item \textbf{Data Layer:} Maintains multiple storage systems including vector stores for embeddings, graph databases for network topology, and time-series databases for sensor measurements.
+\bigbreak
+\item \textbf{External Services:} Interfaces with SCADA systems for real-time data acquisition and EPANET for network topology information.
+
+\end{itemize}
+
+
+\subsection{Decomposition Description}
+This section details the decomposition of the LightEdge-IDS system into its primary functional, logical, and behavioral elements. The subsequent diagrams—Component, Module, Class, Sequence, and Activity—provide orthogonal views of the system to guide the implementation and integration of the software.
+
+\subsubsection{Component Diagram}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.1cm, scale=0.7, every node/.style={transform shape}]
+
+% Components
+\node[component,fill=white] (data) {DataIngestion};
+\node[component, right=of data,fill=white] (preprocess) {Preprocessor};
+\node[component, right=of preprocess,fill=white] (subgraph) {SubgraphBuilder};
+\node[component, below=of data,fill=white] (adapter) {AdapterTrainer};
+\node[component, right=of adapter,fill=white] (global) {GlobalTrainer};
+\node[component, right=of global,fill=white] (leiden) {LeidenZoneDivider};
+\node[component, below=of adapter,fill=white] (deploy) {EdgeDeployer};
+\node[component, right=of deploy,fill=white] (inference) {InferenceEngine};
+\node[component, right=of inference,fill=white] (alert) {AlertManager};
+
+% Data stores
+\node[data, left=of data,fill=white] (sensor) {Sensor Data};
+\node[data, right=1.1cm of subgraph,fill=white] (topology) {Network Topology};
+\node[data, left=of deploy,fill=white] (model) {Trained Models};
+
+% Connections
+\draw[arrow,black] (data) -- (preprocess);
+\draw[arrow,black] (preprocess) -- (subgraph);
+\draw[arrow,black] (subgraph) -- (leiden);
+\draw[arrow,black] (leiden) -- (global);
+\draw[arrow,black] (global) -- (adapter);
+\draw[arrow,black] (adapter) -- (deploy);
+\draw[arrow,black] (deploy) -- (inference);
+\draw[arrow,black] (inference) -- (alert);
+
+\draw[arrow,black] (sensor) -- (data);
+\draw[arrow,black] (topology) -- (subgraph);
+\draw[arrow,black] (adapter) -- (model);
+\draw[arrow,black] (model) -- (deploy);
+
+\end{tikzpicture}
+\caption{Component Diagram}
+\end{figure}
+
+A component diagram provides a high-level visual representation of the structural and functional elements of a system, illustrating how individual modules interact and collaborate to achieve the system’s objectives. For the LightEdge-IDS platform, the component diagram outlines the core modules responsible for data acquisition, processing, learning, deployment, and real-time detection in water distribution networks. Each component is designed to perform a specific function while integrating seamlessly with other modules, ensuring efficient, scalable, and adaptive intrusion detection from data ingestion to alert management.
+Core components and their interactions:
+
+\begin{itemize}
+    \item \textbf{DataIngestion:}  
+    Aggregates heterogeneous data sources including real-time SCADA sensor readings, EPANET-based network topology files, and historical attack datasets. Ensures continuous and reliable data flow into the system for further analysis.
+
+    \item \textbf{Preprocessor:}  
+    Performs data cleaning, normalization, and feature extraction to remove inconsistencies and noise. Prepares structured input suitable for both spatial and temporal learning models.
+
+    \item \textbf{SubgraphBuilder:}  
+    Constructs localized subgraphs centered around sensors or junctions while preserving key hydraulic and communication relationships. This reduces computational complexity and enables zone-level analysis.
+
+    \item \textbf{LeidenZoneDivider:}  
+    Utilizes the Leiden algorithm to partition the water network into optimal zones based on topological and operational similarity. This facilitates efficient localized learning and scalable deployment.
+
+    \item \textbf{GlobalTrainer:}  
+    Trains a unified GNN-GRU model on multi-zone data to capture system-wide spatial-temporal patterns and global attack signatures, forming the foundation for subsequent zone-level adaptation.
+
+    \item \textbf{AdapterTrainer:}  
+    Generates lightweight, zone-specific adapters that fine-tune the global model to local data characteristics. This enhances detection sensitivity while reducing overfitting to global trends.
+
+    \item \textbf{EdgeDeployer:}  
+    Compresses and optimizes trained models for deployment on edge devices using pruning and quantization. Ensures efficient execution with minimal resource consumption in real-time environments.
+
+    \item \textbf{InferenceEngine:}  
+    Executes continuous real-time anomaly detection on streaming sensor data. Evaluates new inputs against trained models to identify deviations and potential cyber-physical threats.
+
+    \item \textbf{AlertManager:}  
+    Handles alert generation, notification, and coordination of response mechanisms. Interfaces with control systems or operators to enable prompt mitigation and ensure operational safety.
+\end{itemize}
+
+
+\subsubsection{Module Diagram}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1cm, scale=0.75, every node/.style={transform shape}]
+
+% ========== INPUT MODULE ==========
+\node[component, fill=white] (scada) {SCADA Interface};
+\node[component, fill=white, below=of scada] (epanet) {EPANET Parser};
+\node[draw, dashed, inner sep=0.3cm, fit=(scada)(epanet)] (inputbox) {};
+\node[above=0.2cm of inputbox] {\textbf{Input Module}};
+
+% ========== PREPROCESSING ==========
+\node[component, fill=white, right=3.5cm of scada] (clean) {Data Cleaning};
+\node[component, fill=white, below=of clean] (norm) {Normalization};
+\node[draw, dashed, inner sep=0.3cm, fit=(clean)(norm)] (prepbox) {};
+\node[above=0.2cm of prepbox] {\textbf{Preprocessing Module}};
+
+% ========== GRAPH MODULE ==========
+\node[component, fill=white, right=3.5cm of clean] (subgraph) {Subgraph Builder};
+\node[component, fill=white, below=of subgraph] (leiden) {Leiden Divider};
+\node[draw, dashed, inner sep=0.3cm, fit=(subgraph)(leiden)] (graphbox) {};
+\node[above=0.2cm of graphbox] {\textbf{Graph Module}};
+
+% ========== INFERENCE ==========
+\node[component, fill=white, below=5cm of clean] (detect) {Attack Detector};
+\node[component, fill=white, below=of detect] (alert) {Alert System};
+\node[draw, dashed, inner sep=0.3cm, fit=(detect)(alert)] (inferbox) {};
+\node[above=0.2cm of inferbox] {\textbf{Inference Module}};
+
+% ========== STORAGE ==========
+\node[component, fill=white, below=5cm of scada] (vector) {Vector DB};
+\node[component, fill=white, below=of vector] (graphdb) {Graph DB};
+\node[draw, dashed, inner sep=0.3cm, fit=(vector)(graphdb)] (storebox) {};
+\node[above=0.2cm of storebox] {\textbf{Storage Module}};
+
+% ========== TRAINING ==========
+\node[component, fill=white, below=5cm of subgraph] (gnn) {GNN-GRU Trainer};
+\node[component, fill=white, below=of gnn] (adapt) {Adapter Trainer};
+\node[draw, dashed, inner sep=0.3cm, fit=(gnn)(adapt)] (trainbox) {};
+\node[above=0.2cm of trainbox] {\textbf{Training Module}};
+
+% ========== CONNECTIONS ==========
+\draw[arrow, black] (inputbox) -- (prepbox);
+\draw[arrow, black] (prepbox) -- (graphbox);
+\draw[arrow, black] (prepbox) -- (graphbox);
+\draw[arrow, black] (graphbox) -- (trainbox);
+\draw[arrow, black] (trainbox) -- (inferbox);
+\draw[arrow, black] (inferbox) -- (storebox);
+
+\end{tikzpicture}
+\caption{Module Diagram}
+\end{figure}
+
+
+A module diagram provides a structural view of the software system by highlighting individual modules and their specific responsibilities. It emphasizes the organization of functionalities, data flow, and interactions between modules, enabling clear understanding of how the system operates. For the LightEdge-IDS framework, the module diagram illustrates the distinct software modules responsible for data acquisition, preprocessing, graph construction, model training, inference, and storage, ensuring efficient, scalable, and adaptive intrusion detection. Software modules and their responsibilities:
+
+\begin{itemize}
+    \item \textbf{Input Module:}  
+    Handles acquisition of heterogeneous data from multiple sources, including real-time SCADA measurements and EPANET network topology files. Ensures reliable and timely delivery of data to downstream processing modules.
+
+    \item \textbf{Preprocessing Module:}  
+    Cleans and normalizes the acquired data, handles missing values, and performs feature engineering. Prepares structured and high-quality inputs suitable for graph construction and machine learning models.
+
+    \item \textbf{Graph Module:}  
+    Constructs sensor-focused subgraphs that preserve essential network relationships and applies the Leiden algorithm for optimal zone division. Facilitates both global and zone-specific learning pipelines.
+
+    \item \textbf{Training Module:}  
+    Implements the complete training workflow for the global GNN-GRU models as well as the lightweight zone-specific adapters. Captures spatial-temporal correlations and local operational characteristics to enhance detection accuracy.
+
+    \item \textbf{Inference Module:}  
+    Performs real-time anomaly detection on streaming sensor data using trained models. Manages alert generation, notification, and response coordination to support operational safety.
+
+    \item \textbf{Storage Module:}  
+    Manages persistent storage of graph structures, node embeddings, model parameters, and time-series sensor data. Ensures efficient retrieval and reuse for training, inference, and system monitoring.
+\end{itemize}
+
+\subsubsection{Class Diagram}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\linewidth]{Report//Images/Class_Diagram_W.png}
+    \caption{Class Diagram}
+    \label{fig:placeholder}
+\end{figure}
+
+This section provides a highly concise explanation of the core object-oriented components used to model the Water Distribution System~(WDS) and implement the Hierarchical GNN-based intrusion detection pipeline.
+
+\paragraph{1. WaterNetwork}
+Represents the physical structure of the WDS, maintaining essential elements such as nodes, edges, and overall topology. It employs the Leiden algorithm to segment the network into optimal zones, enabling efficient graph-based learning and local adaptation.
+
+\paragraph{2. SensorData}
+Manages the acquisition and preprocessing of real-time time-series data from field sensors. This includes cleaning, normalization, and feature extraction steps to generate input vectors compatible with the GNN-based model.
+
+\paragraph{3. GNNGRUModel}
+This class implements the core hybrid GNN–GRU architecture responsible for global pattern learning. It focuses on system-wide training and inference, capturing spatial–temporal dependencies within the entire network.
+
+\paragraph{4. ZoneAdapter}
+A lightweight, low-parameter extension of the Global Model,  enabling localized fine-tuning for each zone. This component minimizes computational overhead while improving accuracy and adaptability in edge-level deployments.
+
+\paragraph{5. AttackDetector}
+Acting as the orchestrator, this class integrates global and zone-level models to perform real-time attack detection. It evaluates anomaly scores, compares them with defined thresholds, and triggers alerts when abnormal behaviors are identified.
+
+
+
+
+\subsubsection{Sequence Diagram}
+
+The sequence diagram illustrates the flow of operations during real-time attack detection:
+
+\begin{enumerate}
+    \item SCADA system streams real-time sensor data.
+    \item DataIngestion component receives and buffers raw measurements.
+    \item Preprocessor cleans, normalizes, and prepares data
+    \item Global GNN-GRU model performs spatial-temporal inference.
+    \item ZoneAdapter applies zone-specific fine-tuning.
+    \item AlertManager evaluates risk and generates alerts if anomaly detected.
+\end{enumerate}
+
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[scale=1.2, every node/.style={transform shape, font=\Huge}]
+  \tikzset{
+    participant/.style={
+      rectangle, draw, rounded corners,
+      minimum width=3.2cm, minimum height=1cm,
+      align=center, fill=blue!6
+    },
+    seqarrow/.style={->, thick} % normal arrow with pointer
+  }
+
+  % Participants (left -> right)
+  \node[participant] (scada)  {\LARGE SCADA System};
+  \node[participant, right=of scada] (ingest) {\LARGE DataIngestion};
+  \node[participant, right=of ingest] (preproc) {\LARGE Preprocessor};
+  \node[participant, right=of preproc] (model) {\LARGE GNN-GRU};
+  \node[participant, right=of model] (adapter) {\LARGE ZoneAdapter};
+  \node[participant, right=of adapter] (alert) {\LARGE AlertManager};
+
+  % Lifelines (extend down)
+  \foreach \p in {scada,ingest,preproc,model,adapter,alert}{
+    \draw[dashed] (\p.south) -- ++(0,-22);
+  }
+
+  % Messages (all with seqarrow style so arrowheads appear)
+  \draw[seqarrow] ($(scada.south)+(0,-1.5)$) -- ($(ingest.south)+(0,-1.5)$)
+    node[midway, above]{\LARGE 1: streamData()};
+  \draw[seqarrow] ($(ingest.south)+(0,-3)$) -- ($(preproc.south)+(0,-3)$)
+    node[midway, above]{\LARGE 2: sendRawData()};
+
+  % Preprocessor self-call
+  \draw[seqarrow] ($(preproc.south)+(0,-4.5)$) -- ($(preproc.south)+(0,-6)$)
+    node[midway, right]{\LARGE 3: process()};
+
+  \draw[seqarrow] ($(preproc.south)+(0,-7.5)$) -- ($(model.south)+(0,-7.5)$)
+    node[midway, above]{\LARGE 4: cleanedData};
+
+  % Model self-call
+  \draw[seqarrow] ($(model.south)+(0,-9)$) -- ($(model.south)+(0,-10.5)$)
+    node[midway, right]{\LARGE 5: globalInference()};
+
+  \draw[seqarrow] ($(model.south)+(0,-12)$) -- ($(adapter.south)+(0,-12)$)
+    node[midway, above]{\LARGE 6: globalOutput};
+
+  % Adapter self-call
+  \draw[seqarrow] ($(adapter.south)+(0,-13.5)$) -- ($(adapter.south)+(0,-15)$)
+    node[midway, right]{\LARGE 7: adapt()};
+
+  \draw[seqarrow] ($(adapter.south)+(0,-16.5)$) -- ($(alert.south)+(0,-16.5)$)
+    node[midway, above]{\LARGE 8: finalPrediction};
+
+  % AlertManager self-call
+  \draw[seqarrow] ($(alert.south)+(0,-18)$) -- ($(alert.south)+(0,-19.5)$)
+    node[midway, right]{\LARGE 9: evaluateRisk()};
+
+  \draw[seqarrow] ($(alert.south)+(0,-21)$) -- ($(scada.south)+(0,-21)$)
+    node[midway, above]{\LARGE 10: generateAlert()};
+\end{tikzpicture}
+}
+\caption{Real-time Detection Sequence Diagram}
+\end{figure}
+
+
+
+
+\subsubsection{Activity Diagram}
+
+The Activity Diagram illustrates the complete workflow and control flow for the LightEdge-IDS system, focusing particularly on the transition of data and models through the seven stages of the Hierarchical Learning pipeline. It visually maps the sequence of computational steps and decision points, demonstrating the transformation of raw sensor input into a deployable, evaluated model. By representing the movement of raw sensor data through preprocessing, graph construction, global and zone-specific model training, and finally to deployment and real-time inference, the diagram offers a clear picture of the system’s end-to-end functionality. Hence, the Activity Diagram serves as a crucial tool for illustrating the logical flow of the LightEdge-IDS system, emphasizing how raw infrastructure data is transformed into actionable security intelligence, and how real-time detection and alert mechanisms are integrated seamlessly into the pipeline.
+
+\begin{itemize}
+
+    \item \textbf{Data Collection:}  
+    Gathers heterogeneous inputs from SCADA sensors, EPANET topology files, and historical attack databases. Ensures a comprehensive representation of the water distribution network for subsequent processing.
+
+    \item \textbf{Preprocessing:}  
+    Cleans, normalizes, and structures the collected data. Handles missing values, noise, and feature extraction to prepare inputs suitable for graph-based and temporal modeling.
+
+    \item \textbf{Subgraph Construction:}  
+    Constructs sensor-focused subgraphs that capture essential spatial relationships in the network. Reduces computational complexity while preserving critical information for anomaly detection.
+
+    \item \textbf{Zone Division:}  
+    Applies the Leiden algorithm to partition the network into optimal zones. Facilitates localized learning and improves detection accuracy by capturing zone-specific operational characteristics.
+
+    \item \textbf{Model Training:}  
+    Trains the global GNN-GRU model to capture overall network patterns and spatial-temporal dependencies. Additionally, fine-tunes zone-specific adapters for localized anomaly detection.
+
+    \item \textbf{Evaluation:}  
+    Assesses the performance of trained models using predefined metrics and test datasets. Ensures models meet accuracy, latency, and robustness requirements before deployment.
+
+    \item \textbf{Deployment:}  
+    Deploys validated models to resource-constrained edge devices using optimization techniques. Ensures real-time inference capability while minimizing computational and memory overhead.
+
+    \item \textbf{Monitoring:}  
+    Continuously monitors system performance and sensor data streams. Supports anomaly logging, alert generation, and periodic model updates to maintain operational reliability.
+
+\end{itemize}
+
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1cm, scale=0.6, every node/.style={transform shape}]
+
+% Start
+\node[circle, draw, fill=black] (start) {};
+
+% Activities
+\node[block, fill=white, below=of start] (collect) {Collect Sensor Data};
+\node[block, fill=white, below=of collect] (preprocess) {Preprocess Data};
+\node[block, fill=white, below=of preprocess] (subgraph) {Build Subgraph};
+\node[block, fill=white, below=of subgraph] (leiden) {Apply Leiden Algorithm};
+\node[block, fill=white, fill=white, below=of leiden] (train) {Train Global Model};
+\node[block, fill=white, below=of train] (adapter) {Train Zone Adapters};
+
+% Decision
+\node[diamond, draw, below=of adapter, aspect=2, text width=3cm, align=center] (decision) {Model \\Performance \\Acceptable?};
+
+% Deploy
+\node[block, fill=white, right=3cm of decision] (deploy) {Deploy to Edge};
+\node[block, fill=white, below=of deploy] (monitor) {Monitor System};
+
+% Retrain
+\node[block, fill=white, left=3cm of decision] (retrain) {Adjust Parameters};
+
+% End
+\node[circle, draw, minimum size=0.7cm,below=of monitor] (ou_end) {};
+\node[circle, draw, fill=black, minimum size=0.5cm ,below=of monitor] (end) {};
+
+% Arrows
+\draw[arrow,black] (start) -- (collect);
+\draw[arrow,black] (collect) -- (preprocess);
+\draw[arrow,black,black] (preprocess) -- (subgraph);
+\draw[arrow,black] (subgraph) -- (leiden);
+\draw[arrow,black] (leiden) -- (train);
+\draw[arrow,black] (train) -- (adapter);
+\draw[arrow,black,black,black,black] (adapter) -- (decision);
+\draw[arrow,black,black,black] (decision) -- node[above] {Yes} (deploy);
+\draw[arrow,black,black] (decision) -- node[above] {No} (retrain);
+\draw[arrow,black] (retrain) |- (train);
+\draw[arrow,black] (deploy) -- (monitor);
+\draw[arrow,black] (monitor) -- (end);
+
+\end{tikzpicture}
+\caption{System Activity Diagram}
+\end{figure}
+
+
+
+
+
+\subsubsection{Deployment Diagram}
+
+A deployment diagram provides a visual representation of the physical arrangement of hardware and software components in a system, illustrating how modules are mapped to devices and how they communicate. Deployment Architecture Components:
+
+\begin{itemize}
+    \item \textbf{Edge Devices:}  
+    Resource-constrained devices deployed at zone locations that run optimized detection models. They perform real-time anomaly detection while minimizing computation and memory usage.
+
+    \item \textbf{Central Server:}  
+    Coordinates global model training, distributes updates to edge devices, and aggregates alerts from multiple zones. Acts as the control hub for system-wide learning and monitoring.
+
+    \item \textbf{Database Server:}  
+    Provides persistent storage for historical sensor data, trained models, embeddings, and system configurations. Supports efficient retrieval for training, inference, and auditing purposes.
+
+    \item \textbf{SCADA System:}  
+    Supplies real-time operational sensor data streams using the OPC-UA protocol. Acts as the primary source of physical process information for the IDS.
+\end{itemize}
+
+Communication Protocols:
+
+\begin{itemize}
+    \item \textbf{HTTPS:} Ensures secure transmission of model updates and alert notifications between the central server and edge devices. Protects against eavesdropping and tampering.
+
+    \item \textbf{TCP/IP:} Facilitates reliable communication with the database server for reading and writing sensor data, model parameters, and system logs.
+
+    \item \textbf{OPC-UA:} Standard protocol for acquiring SCADA sensor data. Provides interoperability and secure, real-time access to operational data streams.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=2cm, scale=0.6, every node/.style={transform shape}]
+
+% Nodes
+\node[rectangle, draw, fill=white, text width=5cm, minimum height=4cm] (edge1) {
+    \textbf{$<<$Edge Device 1$>>$}\\
+    Zone 1 Detector\\
+    \rule{4cm}{0.4pt}\\
+    - Global Model\\
+    - Zone 1 Adapter\\
+    - Inference Engine
+};
+
+\node[rectangle, draw, fill=white, text width=5cm, minimum height=4cm, right=of edge1, xshift=1cm] (edge2) {
+    \textbf{$<<$Edge Device 2$>>$}\\
+    Zone 2 Detector\\
+    \rule{4cm}{0.4pt}\\
+    - Global Model\\
+    - Zone 2 Adapter\\
+    - Inference Engine
+};
+
+\node[rectangle, draw, fill=white, text width=5cm, minimum height=4cm, below=of edge1, yshift=-1cm, xshift=-1cm] (central) {
+    \textbf{$<<$Central Server$>>$}\\
+    Training \& Management\\
+    \rule{4cm}{0.4pt}\\
+    - Model Repository\\
+    - Training Pipeline\\
+    - Alert Aggregator
+};
+
+\node[rectangle, draw, fill=white, text width=5cm, minimum height=4cm, below=of edge2, yshift=-1cm] (db) {
+    \textbf{$<<$Database Server$>>$}\\
+    Data Storage\\
+    \rule{4cm}{0.4pt}\\
+    - Time-Series DB\\
+    - Graph Database\\
+    - Vector Store
+};
+
+\node[rectangle, draw, fill=white, text width=4cm, minimum height=2cm, above=of edge1, yshift=-1cm, xshift=4.5cm] (scada) {
+    \textbf{$<<$SCADA System$>>$}\\
+    \rule{3cm}{0.4pt}\\
+    Sensor Network
+};
+
+% Connections
+\draw[arrow, <->,black] (edge1) -- node[right] {HTTPS} (central);
+\draw[arrow, <->,black] (edge2) -- node[left] {HTTPS} (central);
+\draw[arrow, <->,black] (central) -- node[above] {TCP/IP} (db);
+\draw[arrow, <->,black] (db) -- node[right] {TCP/IP} (edge2);
+\draw[arrow, ->,black] (scada) -- node[left] {OPC-UA} (edge1);
+\draw[arrow, ->,black] (scada) -- node[right] {OPC-UA} (edge2);
+
+\end{tikzpicture}
+\caption{Deployment Diagram}
+\end{figure}
+
+
+
+
+
+\subsubsection{Use Case Diagram}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Report/Images/Usecase.png}
+    \caption{Use Case Diagram}
+    \label{fig:placeholder}
+\end{figure}
+
+
+\begin{itemize}
+\item \textbf{Deploy IDS}: Set up and integrate the Intrusion Detection System~(IDS) across the water distribution network, ensuring proper configuration on both central and edge components.
+\item \textbf{Configure zone parameters}: Define hydraulic zone boundaries and Leiden algorithm parameters for optimal attack detection performance.
+\item \textbf{Update global/zone models}: 
+Periodically retrain and validate machine learning models for both network-wide and zone-specific detection, followed by deployment of improved models.
+\item \textbf{Perform field inspection}: Conduct physical inspections, calibration, and maintenance of sensors, edge devices, and network hardware.
+\item \textbf{Validate detections}: Physically verify and confirm actual cyber-physical attacks detected by the automated system in the field.
+\item \textbf{Monitor alerts}: Continuously monitor, triage, and prioritize security alerts generated by the IDS in real-time operations.
+\item \textbf{Respond to threats}: Execute incident response procedures and mitigation actions when confirmed cyber-physical attacks are detected.
+\item \textbf{Receive simplified alerts}: Get clear, actionable security notifications with severity levels and recommended response actions.
+\item \textbf{Review reports}: Analyze detailed technical reports on system performance, detection metrics, and hydraulic impact analysis.
+\item \textbf{Audit logs}: Examine comprehensive system logs for forensic analysis, performance optimization, and operational compliance.
+
+\end{itemize}
+
+
+
+
+\subsection{Design Rationale}
+
+The LightEdge-IDS architecture was designed based on several critical considerations and trade-offs:
+
+\textbf{Hierarchical Learning Approach:}
+The decision to implement a global-then-local training strategy addresses the fundamental challenge of water distribution networks: they exhibit both universal hydraulic patterns and zone-specific operational characteristics.
+\bigbreak
+\textbf{Leiden Algorithm Selection:}
+The Leiden algorithm was chosen over the more common Louvain algorithm for zone division due to its guarantee of well-connected communities. Leiden's refinement step ensures that identified zones are internally cohesive and hydraulically meaningful.
+\bigbreak
+\textbf{GNN-GRU Architecture:}
+The combination of Graph Neural Networks and Gated Recurrent Units captures both spatial relationships (through GNN layers) and temporal evolution (through GRU layers). Water distribution systems exhibit strong spatial correlations and temporal dependencies.
+\bigbreak
+\textbf{Edge Deployment Strategy:}
+Deploying detection capabilities directly on edge devices provides several advantages like reduced latency for critical infrastructure protection, continued operation during network disruptions, reduced bandwidth requirements and enhanced privacy by keeping sensitive data local.
+
+
+
+\newpage
+\section{Data Design}
+This section defines the static and dynamic data structures essential for the LightEdge-IDS operation, encompassing raw sensor inputs, system topology, and the persistence of training artifacts. It details how the relationship between network elements and model components is organized and stored to support both global training and real-time edge inference.
+\subsection{Data Description}
+
+The LightEdge-IDS system manages multiple data types across different storage systems, each optimized for specific access patterns and performance requirements.
+\begin{itemize}
+
+\item \textbf{Sensor Time-Series Data:} Real-time measurements from SCADA systems including pressure readings, flow rates, tank levels, pump status and valve positions. 
+
+\item \textbf{Network Topology Data:} Physical infrastructure layout from EPANET files like junctions, pipes, pumps, valves, tanks/reservoirs.
+
+\item \textbf{Attack Pattern Data:} Historical attack scenarios with labels including sensor spoofing incidents, actuator manipulation events, coordinated multi-vector attacks and normal operation periods.
+
+\item \textbf{Model Data:} Trained neural network parameters such as global GNN-GRU weights, zone-specific adapter weights, embedding vectors for nodes and zone assignment mappings.
+
+\end{itemize}
+\newpage
+
+\section{Component Design}
+
+This section provides detailed pseudocode for the core components of the LightEdge-IDS system.
+
+\subsection{Preprocessor Component}
+
+Transforms raw data into analysis-ready format.
+
+\begin{lstlisting}[basicstyle=\ttfamily\small, breaklines=true, frame=single]
+Component Preprocessor(config):
+
+    Function clean_data(raw_data):
+        Remove duplicate entries by sensorId and timestamp
+        Handle missing values according to strategy
+        Detect and remove outliers
+        Return cleaned data
+
+    Function normalize_features(data, feature_columns):
+        If normalization_method == "minmax":
+            Apply Min-Max scaling
+        Else if normalization_method == "standard":
+            Apply Standard scaling
+        Return normalized data
+
+\end{lstlisting}
+
+
+\subsection{SubgraphBuilder Component}
+
+Constructs sensor-focused network subgraphs.
+
+\begin{lstlisting}[basicstyle=\ttfamily\small, breaklines=true, frame=single]
+Component SubgraphBuilder(network_graph):
+
+    Function identify_sensor_nodes(sensor_data):
+        Extract unique nodeIds from sensor_data
+        Select nodes from full network matching these IDs
+        Return sensor_nodes
+
+    Function construct_subgraph(sensor_nodes):
+        Initialize empty subgraph
+        Add sensor_nodes to subgraph
+        For each pair of sensor nodes:
+            Find shortest path in full network
+            Compute aggregated weight of path
+            Add weighted edge between nodes in subgraph
+        Return subgraph
+\end{lstlisting}
+
+
+\subsection{LeidenZoneDivider Component}
+
+Applies Leiden algorithm for zone identification.
+
+\begin{lstlisting}[basicstyle=\ttfamily\small, breaklines=true, frame=single]
+Component LeidenZoneDivider(resolution, n_iterations):
+
+    Function divide_zones(subgraph):
+        Initialize each node in its own community
+        Repeat for n_iterations:
+            Perform local moving phase to optimize modularity
+            Refine partition to ensure well-connected communities
+            Aggregate graph by communities
+            If communities converge: break
+        Extract and return final zones
+
+    Function local_moving(graph, communities):
+        Iteratively move nodes to better communities
+        Return updated communities
+
+    Function refine_partition(graph, communities):
+        For each community:
+            If well connected: keep as is
+            Else: split into smaller communities
+        Return refined set of communities
+\end{lstlisting}
+
+
+\subsection{GlobalTrainer Component}
+
+Trains the global GNN-GRU model.
+
+\begin{lstlisting}[basicstyle=\ttfamily\small, breaklines=true, frame=single]
+Component GlobalTrainer(model_config):
+
+    Initialize GNN-GRU model with input/output dimensions
+    Set optimizer and loss function
+
+    Function train(train_data, val_data, epochs):
+        best_val_loss = infinity
+        For epoch in range(epochs):
+            train_loss = train_epoch(train_data)
+            val_loss, metrics = validate(val_data)
+            If val_loss < best_val_loss:
+                Save model as best_global_model
+                Update best_val_loss
+        Return trained model
+
+    Function train_epoch(data_loader):
+        For each batch in data_loader:
+            Extract node features, edges, and labels
+            Perform forward pass through GNN and GRU
+            Compute loss
+            Backpropagate and update parameters
+        Return average loss
+\end{lstlisting}
+
+
+\subsection{AdapterTrainer Component}
+
+Trains zone-specific adapters.
+
+\begin{lstlisting}[basicstyle=\ttfamily\small, breaklines=true, frame=single]
+Component AdapterTrainer(global_model, adapter_config):
+
+    Freeze global_model parameters
+    Define adapter rank and scaling factor
+
+    Function train_zone_adapter(zone_id, zone_data, epochs):
+        Initialize ZoneAdapter for given zone
+        For each epoch:
+            For each batch in zone_data:
+                Obtain global_model output (frozen)
+                Apply zone adapter transformation
+                Combine global + adapter outputs
+                Compute loss and update adapter
+        Return trained adapter
+
+    Function train_all_adapters(zones_data):
+        For each zone_id in zones_data:
+            Train adapter with zone-specific data
+            Store adapter in dictionary
+        Return all trained adapters
+\end{lstlisting}
+
+
+\newpage
+\section{Requirements Matrix}
+
+
+This section provides traceability between functional and non-functional requirements and system components.
+
+%---------------- Functional Requirements Table ----------------%
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{|l|X|X|}
+\hline
+\textbf{Req ID} & \textbf{Functional Requirement} & \textbf{System Components} \\
+\hline
+FR1 & Ingest multi-source data (sensors, topology, attacks) & Data Ingestion, SCADA Interface, EPANET Parser \\
+\hline
+FR2 & Preprocess and clean sensor data in real-time & Preprocessor, DataCleaning, Normalization \\
+\hline
+FR3 & Construct sensor-focused network subgraphs & SubgraphBuilder, PathCondensation \\
+\hline
+FR4 & Perform zone division using Leiden algorithm & LeidenZoneDivider, ModularityOptimizer \\
+\hline
+FR5 & Train global GNN-GRU model for attack detection & GlobalTrainer, GNNGRU Model, TrainingPipeline \\
+\hline
+FR6 & Train zone-specific adapter modules & AdapterTrainer, ZoneAdapter, LowRankDecomposition \\
+\hline
+FR7 & Deploy models to resource-constrained edge devices & EdgeDeployer, ModelOptimizer, EdgeRuntime \\
+\hline
+FR8 & Execute real-time inference with low latency & InferenceEngine, SlidingWindow, GraphConstructor \\
+\hline
+FR9 & Generate and manage security alerts & AlertManager, NotificationSystem, AlertEnricher \\
+\hline
+FR10 & Provide interactive monitoring dashboard & UserInterface, NetworkVisualization, DashboardAPI \\
+\hline
+FR11 & Support historical data analysis and reporting & AnalysisEngine, TimeSeriesDB, ReportGenerator \\
+\hline
+FR12 & Enable system configuration and threshold tuning & ConfigManager, ThresholdAdjuster, ParameterStore \\
+\hline
+\end{tabularx}
+\caption{Functional Requirements Traceability Matrix}
+\end{table}
+
+\clearpage % Force the next table to start on a new page
+
+%---------------- Non-Functional Requirements Table ----------------%
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{|l|X|X|}
+\hline
+\textbf{Req ID} & \textbf{Non-Functional Requirement} & \textbf{System Components} \\
+\hline
+NFR1 & Detection latency $<$ 5 seconds & InferenceEngine, EdgeDeployer, OptimizedModels \\
+\hline
+NFR2 & Support deployment on devices with 2GB RAM & ModelOptimizer, LightweightAdapters, EdgeRuntime \\
+\hline
+NFR3 & Achieve detection accuracy $>$ 95\% & GlobalTrainer, AdapterTrainer, EvaluationModule \\
+\hline
+NFR4 & Handle 1000+ sensors per network & ScalableArchitecture, DistributedProcessing \\
+\hline
+NFR5 & Ensure 99.9\% system availability & RedundantDeployment, FailoverMechanism \\
+\hline
+NFR6 & Support real-time data rates up to 1Hz & DataIngestion, StreamProcessor, BufferManagement \\
+\hline
+NFR7 & Provide secure communication channels & EncryptionLayer, AuthenticationModule, TLS \\
+\hline
+NFR8 & Enable model updates without system downtime & HotSwapMechanism, VersionControl, RollbackSupport \\
+\hline
+\end{tabularx}
+\caption{Non-Functional Requirements Traceability Matrix}
+\end{table}
+
+
+\section{Conclusion}
+
+The Design Phase of the LightEdge-IDS project establishes a comprehensive architectural, functional, and data-centric foundation for intelligent intrusion detection within water distribution networks. Each subsystem — from preprocessing and subgraph construction to adaptive learning and edge inference — has been meticulously designed to balance scalability, accuracy, and real-time responsiveness.
+
+The use of a hierarchical GNN-GRU framework enables simultaneous modeling of spatial and temporal dependencies, while the incorporation of the Leiden algorithm ensures hydraulically meaningful zone partitioning. The layered component design supports modular implementation, allowing independent development, testing, and optimization of each stage — from data ingestion to anomaly detection and alert management.
+
+Furthermore, the detailed requirements traceability matrices ensure that both functional and non-functional specifications are systematically addressed and verifiable. The data design promotes efficient handling of diverse sources, maintaining consistency between training and inference environments. The implementation timeline and supporting appendices provide a clear roadmap for phased deployment, validation, and future scalability.
+
+Overall, this design framework transforms LightEdge-IDS from a conceptual model into a deployable, maintainable, and extensible system. It ensures that the subsequent implementation phase proceeds with clarity, alignment to objectives, and strong adherence to performance, reliability, and security goals critical to cyber-physical infrastructure protection.
+
+\clearpage
+\section{APPENDICES}
+
+
+\subsection{Appendix A: Implementation Timeline}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Phase} & \textbf{Tasks} & \textbf{Duration} \\
+\hline
+Phase 1 & Data collection and preprocessing pipeline & 2 weeks \\
+ & Subgraph construction implementation & \\
+\hline
+Phase 2 & Leiden algorithm integration &  2 weeks \\
+ & Zone division testing and validation & \\
+\hline
+Phase 3 & Global GNN-GRU model development & 3 weeks \\
+ & Training pipeline implementation & \\
+ & Model evaluation and tuning & \\
+\hline
+Phase 4 & Zone adapter architecture implementation & 4 weeks \\
+ & Adapter training and optimization & \\
+\hline
+Phase 5 & Edge deployment framework & 1 weeks \\
+ & Model optimization for edge devices & \\
+ & Real-time inference engine & \\
+\hline
+Phase 6 & System integration testing & 2 weeks \\
+ & Performance optimization & \\
+ & Security hardening & \\
+\hline
+Phase 7 & Documentation and training & 1 weeks 
+ \\
+\hline
+\textbf{Total} & & \textbf{14 weeks} \\
+\hline
+\end{tabular}
+\caption{Implementation Timeline}
+\end{table}
+\newpage
+\subsection{Appendix B: Abbreviations and Glossary}
+
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Term} & \textbf{Definition} \\
+\hline
+Adapter & Lightweight neural module for zone-specific fine-tuning \\
+\hline
+BATADAL & Battle of Attack Detection Algorithms - benchmark dataset \\
+\hline
+Cyber-Physical Attack & Malicious activity targeting both cyber and physical components \\
+\hline
+Edge Computing & Distributed computing paradigm that brings computation closer to data sources \\
+\hline
+EPANET & Environmental Protection Agency Network simulation tool \\
+\hline
+GNN & Graph Neural Network - neural network for graph-structured data \\
+\hline
+GRU & Gated Recurrent Unit - type of recurrent neural network \\
+\hline
+IDS & Intrusion Detection System \\
+\hline
+SCADA & Supervisory Control and Data Acquisition system \\
+\hline
+
+Leiden Algorithm & Community detection algorithm ensuring well-connected zones \\
+\hline
+Low-Rank Decomposition & Matrix factorization for parameter-efficient adaptation \\
+\hline
+Modularity & Measure of network division quality into communities \\
+\hline
+OPC-UA & Open Platform Communications Unified Architecture \\
+\hline
+Sensor Spoofing & Attack manipulating sensor readings \\
+\hline
+Spatial-Temporal & Modeling both space (network) and time dimensions \\
+\hline
+\end{tabularx}
+\caption{Glossary of Terms}
+\end{table}
+
+
+\end{spacing}
